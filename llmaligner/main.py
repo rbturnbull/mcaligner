@@ -23,6 +23,7 @@ def db(
 def align(
     db1:Path = typer.Option(..., help="Path to first database (see `db` command)"),
     db2:Path = typer.Option(..., help="Path to second database (see `db` command)"),
+    guidelines:Path = typer.Option(None, help="Path to guidelines file (optional)"),
     output:Path = typer.Option(..., help="Path to output YAML file"),
     n_examples:int = typer.Option(10, help="Number of examples to include in the prompt"),
     model:str = typer.Option("claude-sonnet-4-5-20250929", help="LLM model to use"),
@@ -37,5 +38,16 @@ def align(
     database1 = load_database(db1)
     database2 = load_database(db2)
 
-    align_items(database1, database2, llm, n_examples, output=output)
+    if guidelines is not None:
+        guidelines = guidelines.read_text()
+
+    align_items(
+        database1, 
+        database2, 
+        llm, 
+        n_examples, 
+        output=output, 
+        guidelines=guidelines, 
+        ignore_existing=ignore_existing,
+    )
 

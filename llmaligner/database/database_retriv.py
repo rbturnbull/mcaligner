@@ -17,9 +17,6 @@ from ..io import yaml_to_dict
 
 def build_retriv_collection(yaml_path: Path) -> list[dict[str, Any]]:
     """
-    Convert a .conllu file into a retriv collection:
-      - required keys: {"id": ..., "text": ...}
-      - we also store the full CoNLL-U serialization + metadata for later use.
     """
     data_as_dict = yaml_to_dict(yaml_path)
     collection = list(data_as_dict.values())

@@ -32,4 +32,4 @@ def test_iter_requires_loaded_db():
     db.db = None
 
     with pytest.raises(RuntimeError):
-        iter(db)
+        next(iter(db))
