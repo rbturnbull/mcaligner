@@ -33,3 +33,26 @@ def test_iter_requires_loaded_db():
 
     with pytest.raises(RuntimeError):
         next(iter(db))
+
+
+def test_getitem_single_id():
+    db = DatabaseRetriv.__new__(DatabaseRetriv)
+    db.db = SimpleNamespace(get_doc=lambda doc_id: {"id": doc_id})
+
+    assert db["doc_123"] == {"id": "doc_123"}
+
+
+def test_getitem_multiple_ids():
+    db = DatabaseRetriv.__new__(DatabaseRetriv)
+    db.db = SimpleNamespace(get_docs=lambda ids: [{"id": i} for i in ids])
+
+    assert db[("doc_123", "doc_456")] == [{"id": "doc_123"}, {"id": "doc_456"}]
+    assert db[["doc_123", "doc_456"]] == [{"id": "doc_123"}, {"id": "doc_456"}]
+
+
+def test_getitem_requires_loaded_db():
+    db = DatabaseRetriv.__new__(DatabaseRetriv)
+    db.db = None
+
+    with pytest.raises(RuntimeError):
+        _ = db["doc_123"]

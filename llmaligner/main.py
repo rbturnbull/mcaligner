@@ -44,8 +44,10 @@ def align(
     align_items(
         database1, 
         database2, 
-        llm, 
-        n_examples, 
+        corpus1=Path(db1).stem, 
+        corpus2=Path(db2).stem,
+        llm=llm, 
+        n_examples=n_examples,
         output=output, 
         guidelines=guidelines, 
         ignore_existing=ignore_existing,

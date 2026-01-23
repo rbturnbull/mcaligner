@@ -75,6 +75,15 @@ class DatabaseRetriv(DatabaseBase):
         for doc in read_jsonl(docs_path(self.db.index_name), generator=True):
             yield doc
 
+    def __getitem__(self, key: str | tuple[str, ...] | list[str]):
+        if self.db is None:
+            raise RuntimeError("Database is not loaded.")
+        if isinstance(key, str):
+            return self.db.get_doc(key)
+        if isinstance(key, (list, tuple)):
+            return self.db.get_docs(list(key))
+        raise TypeError("Key must be a string or a list/tuple of strings.")
+
     def similarity_search(self, query: str, k: int = DEFAULT_NUM_RESULTS):
         if self.db is None:
             raise RuntimeError("Database is not loaded.")
