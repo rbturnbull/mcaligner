@@ -8,7 +8,8 @@ from types import SimpleNamespace
 import conllu
 from retriv import SparseRetriever
 from retriv.paths import docs_path
-from retriv.utils import read_jsonl
+from oneliner_utils import read_jsonl
+
 from rich.progress import Progress, track
 
 from .database_base import DEFAULT_NUM_RESULTS, DatabaseBase
