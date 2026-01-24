@@ -2,7 +2,7 @@ from pathlib import Path
 from rich.progress import track
 
 from .database import DatabaseBase
-from .io import write_yaml
+from .io import write_yaml, load_file
 from .prompt import build_chain
 
 
@@ -80,10 +80,14 @@ def align_items(
 
     # Merge documents from both databases
     data = merge_data(database1, database2, corpus1, corpus2)
+    if output is not None:
+        existing_data = load_file(output)
+        if set(existing_data.keys()) == set(data.keys()):
+            print(f"Loading existing data from {output}")
+            data = existing_data
 
     for item_id, item in track(data.items(), total=len(data), description="Aligning parallel texts..."):
         if ignore_existing and 'alignment' in item:
-            print(f"Skipping existing alignment for item {item_id}")
             continue
 
         if item[corpus1] is None:
