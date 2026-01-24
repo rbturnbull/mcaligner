@@ -1,9 +1,5 @@
 from pathlib import Path
 import typer
-import llmloader
-
-from .database import load_database, build_database
-from .align import align_items
 
 app = typer.Typer()
 
@@ -13,6 +9,8 @@ def db(
     output:Path = typer.Argument(..., help="Path to output database"),
 ):
     """ Build database of examples from a CoNLL-U file or a YAML file with CoNLL-U parsing. """
+    from .database import build_database
+
     build_database(
         yaml_path=input,
         output_path=output,
@@ -21,8 +19,8 @@ def db(
 
 @app.command()
 def align(
-    db1:Path = typer.Option(..., help="Path to first database (see `db` command)"),
-    db2:Path = typer.Option(..., help="Path to second database (see `db` command)"),
+    db1:Path = typer.Argument(..., help="Path to first database (see `db` command)"),
+    db2:Path = typer.Argument(..., help="Path to second database (see `db` command)"),
     guidelines:Path = typer.Option(None, help="Path to guidelines file (optional)"),
     output:Path = typer.Option(..., help="Path to output YAML file"),
     n_examples:int = typer.Option(10, help="Number of examples to include in the prompt"),
@@ -32,6 +30,10 @@ def align(
     ignore_existing:bool = typer.Option(True, help="Ignore items that already have 'align' field in the output"),
 ):
     """ Parse items in input YAML file using LLM and example database, write output YAML file. """
+    import llmloader
+    from .database import load_database
+    from .align import align_items
+
     llm = llmloader.load(model, temperature=temperature, api_key=api_key)
 
     # Load databases
@@ -52,4 +54,3 @@ def align(
         guidelines=guidelines, 
         ignore_existing=ignore_existing,
     )
-

@@ -19,8 +19,20 @@ def build_retriv_collection(yaml_path: Path) -> list[dict[str, Any]]:
     """
     """
     data_as_dict = yaml_to_dict(yaml_path)
-    collection = list(data_as_dict.values())
+    collection: list[dict[str, Any]] = []
+    for item_id, item in data_as_dict.items():
+        if 'text' not in item:
+            continue
+        item['id'] = item_id
+        collection.append(item)
+
     return collection
+
+
+def build_id_set(sr: SparseRetriever) -> set[str]:
+    if sr.id_mapping is None:
+        sr.initialize_id_mapping()
+    return set(sr.id_mapping.values())
 
 
 class DatabaseRetriv(DatabaseBase):
@@ -63,6 +75,7 @@ class DatabaseRetriv(DatabaseBase):
 
         os.environ["RETRIV_BASE_PATH"] = str(path)
         self.db = SparseRetriever(index_name=self.index_name)
+        self.db.initialize_doc_index()
 
     def __call__(self, query: str, k: int = DEFAULT_NUM_RESULTS) -> list[dict]:
         if self.db is None:
@@ -89,6 +102,11 @@ class DatabaseRetriv(DatabaseBase):
             raise RuntimeError("Database is not loaded.")
         results = self.db.search(query, return_docs=True, cutoff=k)
         return [SimpleNamespace(metadata=result) for result in results]
+
+    def __contains__(self, item_id: str) -> bool:
+        if self.db is None:
+            raise RuntimeError("Database is not loaded.")
+        return item_id in build_id_set(self.db)
 
 
 def build_database(yaml_path: Path, output_path: Path, index_name: str = "index") -> DatabaseRetriv:

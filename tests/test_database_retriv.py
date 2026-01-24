@@ -8,6 +8,7 @@ retriv = pytest.importorskip("retriv")
 from llmaligner.database import database_retriv as mod
 from llmaligner.database.database_retriv import (
     DatabaseRetriv,
+    build_id_set,
     build_retriv_collection,
     build_database,
     search_database,
@@ -210,6 +211,10 @@ def test_load_sets_env_and_db(monkeypatch, tmp_path):
     class FakeSR:
         def __init__(self, index_name="index"):
             created["index_name"] = index_name
+            created["initialized"] = False
+
+        def initialize_doc_index(self):
+            created["initialized"] = True
 
     monkeypatch.setattr(mod, "SparseRetriever", FakeSR)
 
@@ -219,4 +224,36 @@ def test_load_sets_env_and_db(monkeypatch, tmp_path):
 
     assert os.environ["RETRIV_BASE_PATH"] == str(path)
     assert created["index_name"] == "myindex"
+    assert created["initialized"] is True
     assert isinstance(db.db, FakeSR)
+
+
+def test_build_id_set_initializes_mapping():
+    class FakeSR:
+        def __init__(self):
+            self.id_mapping = None
+            self.called = False
+
+        def initialize_id_mapping(self):
+            self.called = True
+            self.id_mapping = {0: "a", 1: "b"}
+
+    sr = FakeSR()
+    assert build_id_set(sr) == {"a", "b"}
+    assert sr.called is True
+
+
+def test_contains_uses_id_set():
+    db = DatabaseRetriv.__new__(DatabaseRetriv)
+    db.db = SimpleNamespace(id_mapping={0: "x", 1: "y"})
+
+    assert "x" in db
+    assert "z" not in db
+
+
+def test_contains_requires_loaded_db():
+    db = DatabaseRetriv.__new__(DatabaseRetriv)
+    db.db = None
+
+    with pytest.raises(RuntimeError):
+        _ = "x" in db

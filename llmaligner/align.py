@@ -44,7 +44,8 @@ def merge_data(database1:DatabaseBase, database2:DatabaseBase, corpus1:str, corp
     for item1 in database1:
         item_id = item1.get("id")
         assert item_id is not None, "All items must have an 'id' field"
-        item2 = database2.get(item_id, None)
+
+        item2 = database2[item_id] if item_id in database2 else None
         data[item_id] = {
             corpus1: item1,
             corpus2: item2,
@@ -84,10 +85,10 @@ def align_items(
             continue
 
         if item[corpus1] is None:
-            print(f"Item {item_id} missing from corpus {corpus1}")
+            print(f"Item {item_id} missing from corpus '{corpus1}'")
             continue
         if item[corpus2] is None:
-            print(f"Item {item_id} missing from corpus {corpus2}")
+            print(f"Item {item_id} missing from corpus '{corpus2}'")
             continue
 
         # Retrieve examples

@@ -35,3 +35,6 @@ class DatabaseBase(ABC):
 
     def __getitem__(self, key: str | Sequence[str]) -> dict | list[dict]:
         raise NotImplementedError()
+
+    def __contains__(self, item_id: str) -> bool:
+        raise NotImplementedError()
