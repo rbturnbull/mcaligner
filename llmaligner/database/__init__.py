@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from .database_base import DatabaseBase
 from .database_retriv import DatabaseRetriv
 
 

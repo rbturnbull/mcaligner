@@ -28,8 +28,12 @@ def retrieve_examples(
         key=lambda x: x.get('score', 0), 
         reverse=True,
     )
-    remaining_count = n_examples - len(example_ids)
-    example_ids += [example['id'] for example in remaining_examples[:remaining_count]]
+
+    for example in remaining_examples:
+        if len(example_ids) >= n_examples:
+            break
+        if example['id'] not in example_ids:
+            example_ids.append(example['id'])
 
     return example_ids
 
