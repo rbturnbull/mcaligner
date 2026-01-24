@@ -74,23 +74,28 @@ class DatabaseRetriv(DatabaseBase):
         assert path.exists(), f"Database path {path} does not exist"
 
         os.environ["RETRIV_BASE_PATH"] = str(path)
-        self.db = SparseRetriever(index_name=self.index_name)
-        self.db.initialize_doc_index()
+        self.db = SparseRetriever.load(index_name=self.index_name)
+
+    def _ensure_retriv_base_path(self) -> None:
+        os.environ["RETRIV_BASE_PATH"] = str(self.path)
 
     def __call__(self, query: str, k: int = DEFAULT_NUM_RESULTS) -> list[dict]:
         if self.db is None:
             raise RuntimeError("Database is not loaded.")
+        self._ensure_retriv_base_path()
         return self.db.search(query, return_docs=True, cutoff=k)
 
     def __iter__(self):
         if self.db is None:
             raise RuntimeError("Database is not loaded.")
+        self._ensure_retriv_base_path()
         for doc in read_jsonl(docs_path(self.db.index_name), generator=True):
             yield doc
 
     def __getitem__(self, key: str | tuple[str, ...] | list[str]):
         if self.db is None:
             raise RuntimeError("Database is not loaded.")
+        self._ensure_retriv_base_path()
         if isinstance(key, str):
             return self.db.get_doc(key)
         if isinstance(key, (list, tuple)):
@@ -100,12 +105,14 @@ class DatabaseRetriv(DatabaseBase):
     def similarity_search(self, query: str, k: int = DEFAULT_NUM_RESULTS):
         if self.db is None:
             raise RuntimeError("Database is not loaded.")
+        self._ensure_retriv_base_path()
         results = self.db.search(query, return_docs=True, cutoff=k)
         return [SimpleNamespace(metadata=result) for result in results]
 
     def __contains__(self, item_id: str) -> bool:
         if self.db is None:
             raise RuntimeError("Database is not loaded.")
+        self._ensure_retriv_base_path()
         return item_id in build_id_set(self.db)
 
 

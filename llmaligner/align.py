@@ -1,4 +1,6 @@
 from pathlib import Path
+from rich.progress import track
+
 from .database import DatabaseBase
 from .io import write_yaml
 from .prompt import build_chain
@@ -79,7 +81,7 @@ def align_items(
     # Merge documents from both databases
     data = merge_data(database1, database2, corpus1, corpus2)
 
-    for item_id, item in data.items():
+    for item_id, item in track(data.items(), total=len(data), description="Aligning parallel texts..."):
         if ignore_existing and 'alignment' in item:
             print(f"Skipping existing alignment for item {item_id}")
             continue
@@ -105,7 +107,7 @@ def align_items(
         chain = build_chain(llm, data, item_id, example_ids, corpus1, corpus2, guidelines)
 
         # Call LLM to get alignment
-        item['align'] = chain.invoke({})
+        item['alignment'] = chain.invoke({})
 
         # Write output YAML file
         if output is not None:
