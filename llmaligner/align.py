@@ -1,6 +1,38 @@
 from pathlib import Path
 from .database import DatabaseBase
 from .io import write_yaml
+from .prompt import build_chain
+
+
+def retrieve_examples(
+    database1:DatabaseBase, 
+    database2:DatabaseBase, 
+    item:dict, 
+    corpus1:str, 
+    corpus2:str, 
+    n_examples:int,
+) -> list[str]:
+    """ Retrieve example IDs from both databases based on similarity to the given item """
+    query1 = item[corpus1]["text"]
+    query2 = item[corpus2]["text"]
+
+    results1 = database1(query1, k=n_examples)
+    results2 = database2(query2, k=n_examples)
+
+    example_ids = [example['id'] for example in results1[:n_examples//3]]
+    example_ids += [example['id'] for example in results2[:n_examples//3] if example['id'] not in example_ids]
+
+    # Sort by score
+    remaining_examples = sorted(
+        results1[n_examples//3:] + results2[n_examples//3:], 
+        key=lambda x: x.get('score', 0), 
+        reverse=True,
+    )
+    remaining_count = n_examples - len(example_ids)
+    example_ids += [example['id'] for example in remaining_examples[:remaining_count]]
+
+    return example_ids
+
 
 def merge_data(database1:DatabaseBase, database2:DatabaseBase, corpus1:str, corpus2:str) -> dict:
     """ Merge documents from two databases into a single dict """
@@ -55,7 +87,7 @@ def align_items(
             continue
 
         # Retrieve examples
-        examples = retrieve_examples(
+        example_ids = retrieve_examples(
             database1, 
             database2, 
             item, 
@@ -65,7 +97,7 @@ def align_items(
         )
 
         # Create prompt
-        chain = build_chain(item, examples)
+        chain = build_chain(llm, data, item_id, example_ids, corpus1, corpus2, guidelines)
 
         # Call LLM to get alignment
         item['align'] = chain.invoke({})
