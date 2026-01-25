@@ -1,6 +1,8 @@
 from pathlib import Path
 import typer
 
+from .io import write_yaml
+
 app = typer.Typer()
 
 @app.command()
@@ -54,3 +56,29 @@ def align(
         guidelines=guidelines, 
         ignore_existing=ignore_existing,
     )
+
+
+@app.command()
+def lexicon(
+    input:Path = typer.Argument(..., help="Path to input YAML file with alignment data"),
+    output:Path = typer.Option(None, help="Path to output lexicon."),
+):
+    """ Build lexicons from alignment data in input YAML file. """
+    from .lexicon import build_lexicon
+    import yaml
+
+    data = yaml.safe_load(input.read_text())
+    first_item = list(data.values())[0]
+    keys = list(first_item.keys())
+    corpus1 = keys[0]
+    corpus2 = keys[1]
+
+    lex1, lex2 = build_lexicon(data, corpus1, corpus2)
+
+    lexicon = {
+        corpus1: lex1,
+        corpus2: lex2,
+    }
+
+    if output is not None:
+        write_yaml(lexicon, output)
