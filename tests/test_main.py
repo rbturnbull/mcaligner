@@ -5,6 +5,8 @@ from unittest.mock import ANY
 from typer.testing import CliRunner
 
 import llmaligner.main as main
+import llmaligner.database as db_module
+import llmaligner.align as align_module
 
 
 def test_db_command_calls_build_database(tmp_path, monkeypatch):
@@ -14,7 +16,7 @@ def test_db_command_calls_build_database(tmp_path, monkeypatch):
     def fake_build_database(yaml_path, output_path):
         calls.append((yaml_path, output_path))
 
-    monkeypatch.setattr(main, "build_database", fake_build_database)
+    monkeypatch.setattr(db_module, "build_database", fake_build_database)
 
     input_path = Path("tests/test_data/sample.yaml")
     output_path = tmp_path / "db"
@@ -58,8 +60,8 @@ def test_align_command_calls_align_items(tmp_path, monkeypatch):
             )
         )
 
-    monkeypatch.setattr(main, "load_database", fake_load_database)
-    monkeypatch.setattr(main, "align_items", fake_align_items)
+    monkeypatch.setattr(db_module, "load_database", fake_load_database)
+    monkeypatch.setattr(align_module, "align_items", fake_align_items)
 
     db1 = tmp_path / "db1"
     db2 = tmp_path / "db2"
@@ -84,7 +86,6 @@ def test_align_command_calls_align_items(tmp_path, monkeypatch):
             "0.7",
             "--api-key",
             "key123",
-            "--no-ignore-existing",
             "--guidelines",
             str(guidelines),
         ],
@@ -105,6 +106,6 @@ def test_align_command_calls_align_items(tmp_path, monkeypatch):
             7,
             output,
             "Be precise.\n",
-            False,
+            True,
         )
     ]

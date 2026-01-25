@@ -18,6 +18,7 @@ from llmaligner.database.database_retriv import (
 def test_iter_yields_docs(monkeypatch):
     db = DatabaseRetriv.__new__(DatabaseRetriv)
     db.db = SimpleNamespace(index_name="myindex")
+    db.path = Path("/tmp/base")
 
     def fake_docs_path(index_name):
         assert index_name == "myindex"
@@ -37,6 +38,7 @@ def test_iter_yields_docs(monkeypatch):
 def test_iter_requires_loaded_db():
     db = DatabaseRetriv.__new__(DatabaseRetriv)
     db.db = None
+    db.path = Path("/tmp/base")
 
     with pytest.raises(RuntimeError):
         next(iter(db))
@@ -64,6 +66,7 @@ def test_build_retriv_collection_reads_yaml(tmp_path):
 def test_call_requires_loaded_db():
     db = DatabaseRetriv.__new__(DatabaseRetriv)
     db.db = None
+    db.path = Path("/tmp/base")
 
     with pytest.raises(RuntimeError):
         db("query", k=2)
@@ -78,6 +81,7 @@ def test_call_uses_search_with_cutoff():
 
     db = DatabaseRetriv.__new__(DatabaseRetriv)
     db.db = SimpleNamespace(search=fake_search)
+    db.path = Path("/tmp/base")
 
     assert db("hello", k=4) == [{"id": "doc1"}]
 
@@ -85,6 +89,7 @@ def test_call_uses_search_with_cutoff():
 def test_getitem_single_id():
     db = DatabaseRetriv.__new__(DatabaseRetriv)
     db.db = SimpleNamespace(get_doc=lambda doc_id: {"id": doc_id})
+    db.path = Path("/tmp/base")
 
     assert db["doc_123"] == {"id": "doc_123"}
 
@@ -92,6 +97,7 @@ def test_getitem_single_id():
 def test_getitem_multiple_ids():
     db = DatabaseRetriv.__new__(DatabaseRetriv)
     db.db = SimpleNamespace(get_docs=lambda ids: [{"id": i} for i in ids])
+    db.path = Path("/tmp/base")
 
     assert db[("doc_123", "doc_456")] == [{"id": "doc_123"}, {"id": "doc_456"}]
     assert db[["doc_123", "doc_456"]] == [{"id": "doc_123"}, {"id": "doc_456"}]
@@ -100,6 +106,7 @@ def test_getitem_multiple_ids():
 def test_getitem_requires_loaded_db():
     db = DatabaseRetriv.__new__(DatabaseRetriv)
     db.db = None
+    db.path = Path("/tmp/base")
 
     with pytest.raises(RuntimeError):
         _ = db["doc_123"]
@@ -108,6 +115,7 @@ def test_getitem_requires_loaded_db():
 def test_getitem_invalid_key_type():
     db = DatabaseRetriv.__new__(DatabaseRetriv)
     db.db = SimpleNamespace(get_doc=lambda _: None, get_docs=lambda _: [])
+    db.path = Path("/tmp/base")
 
     with pytest.raises(TypeError):
         _ = db[123]
@@ -122,6 +130,7 @@ def test_similarity_search_wraps_results():
 
     db = DatabaseRetriv.__new__(DatabaseRetriv)
     db.db = SimpleNamespace(search=fake_search)
+    db.path = Path("/tmp/base")
 
     results = db.similarity_search("hello", k=3)
 
@@ -208,15 +217,11 @@ def test_load_sets_env_and_db(monkeypatch, tmp_path):
 
     created = {}
 
-    class FakeSR:
-        def __init__(self, index_name="index"):
-            created["index_name"] = index_name
-            created["initialized"] = False
+    def fake_load(index_name="index"):
+        created["index_name"] = index_name
+        return SimpleNamespace()
 
-        def initialize_doc_index(self):
-            created["initialized"] = True
-
-    monkeypatch.setattr(mod, "SparseRetriever", FakeSR)
+    monkeypatch.setattr(mod.SparseRetriever, "load", staticmethod(fake_load))
 
     path = tmp_path / "db"
     path.mkdir()
@@ -224,8 +229,7 @@ def test_load_sets_env_and_db(monkeypatch, tmp_path):
 
     assert os.environ["RETRIV_BASE_PATH"] == str(path)
     assert created["index_name"] == "myindex"
-    assert created["initialized"] is True
-    assert isinstance(db.db, FakeSR)
+    assert isinstance(db.db, SimpleNamespace)
 
 
 def test_build_id_set_initializes_mapping():
@@ -246,6 +250,7 @@ def test_build_id_set_initializes_mapping():
 def test_contains_uses_id_set():
     db = DatabaseRetriv.__new__(DatabaseRetriv)
     db.db = SimpleNamespace(id_mapping={0: "x", 1: "y"})
+    db.path = Path("/tmp/base")
 
     assert "x" in db
     assert "z" not in db
@@ -254,6 +259,7 @@ def test_contains_uses_id_set():
 def test_contains_requires_loaded_db():
     db = DatabaseRetriv.__new__(DatabaseRetriv)
     db.db = None
+    db.path = Path("/tmp/base")
 
     with pytest.raises(RuntimeError):
         _ = "x" in db

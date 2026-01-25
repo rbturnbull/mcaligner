@@ -31,6 +31,12 @@ class DummyIterDB:
     def get(self, item_id, default=None):
         return self._items_by_id.get(item_id, default)
 
+    def __contains__(self, item_id):
+        return item_id in self._items_by_id
+
+    def __getitem__(self, item_id):
+        return self._items_by_id[item_id]
+
     def __call__(self, query, k):
         self.calls.append((query, k))
         return self._search_results.get(query, [])
@@ -151,6 +157,7 @@ def test_align_items_runs_and_writes(monkeypatch, tmp_path):
     monkeypatch.setattr(align, "retrieve_examples", fake_retrieve_examples)
     monkeypatch.setattr(align, "build_chain", fake_build_chain)
     monkeypatch.setattr(align, "write_yaml", fake_write_yaml)
+    monkeypatch.setattr(align, "load_file", lambda _: {})
 
     output = tmp_path / "out.yaml"
     data = align_items(
@@ -164,7 +171,7 @@ def test_align_items_runs_and_writes(monkeypatch, tmp_path):
         guidelines="",
     )
 
-    assert data["1"]["align"] == "1-1S"
+    assert data["1"]["alignment"] == "1-1S"
     assert "2" in data
     assert "align" not in data["2"]
     assert recorded["build_chain"] == [("1", ("ex1",), "c1", "c2", "")]
