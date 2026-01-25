@@ -27,7 +27,7 @@ def align(
     model:str = typer.Option("claude-sonnet-4-5-20250929", help="LLM model to use"),
     temperature:float = typer.Option(0.2, help="LLM temperature"),
     api_key:str = typer.Option(None, help="API key for LLM"),
-    ignore_existing:bool = typer.Option(True, help="Ignore items that already have 'align' field in the output"),
+    ignore_existing:bool = typer.Option(True, help="Ignore items that already have 'alignment' field in the output"),
 ):
     """ Parse items in input YAML file using LLM and example database, write output YAML file. """
     import llmloader
