@@ -9,9 +9,6 @@ import conllu
 def _iter_tokens(conllu_text: str):
     if not conllu_text:
         return
-    print("------------")
-    print(conllu_text)
-    print("------------")
     for sent in conllu.parse(conllu_text):
         for token in sent:
             token_id = token.get("id")
@@ -55,7 +52,12 @@ def _parse_alignment(alignment: str | None) -> tuple[dict[int, set[int]], dict[i
 
 
 def _empty_lexicon_entry():
-    return {"occurrences": 0, "no_alignments": 0, "alignments": defaultdict(int)}
+    return {
+        "occurrences": 0,
+        "no_alignments": 0,
+        "alignments": defaultdict(int),
+        "pos_counts": defaultdict(int),
+    }
 
 
 def build_lexicon(data: dict, corpus1: str, corpus2: str) -> tuple[dict, dict]:
@@ -85,6 +87,9 @@ def build_lexicon(data: dict, corpus1: str, corpus2: str) -> tuple[dict, dict]:
             lemma = _token_lemma(token)
             entry = lex1[lemma]
             entry["occurrences"] += 1
+            pos = token.get("upos")
+            if pos:
+                entry["pos_counts"][pos] += 1
             aligned_ids = map_1_to_2.get(token_id)
             if not aligned_ids:
                 entry["no_alignments"] += 1
@@ -100,6 +105,9 @@ def build_lexicon(data: dict, corpus1: str, corpus2: str) -> tuple[dict, dict]:
             lemma = _token_lemma(token)
             entry = lex2[lemma]
             entry["occurrences"] += 1
+            pos = token.get("upos")
+            if pos:
+                entry["pos_counts"][pos] += 1
             aligned_ids = map_2_to_1.get(token_id)
             if not aligned_ids:
                 entry["no_alignments"] += 1
@@ -114,10 +122,16 @@ def build_lexicon(data: dict, corpus1: str, corpus2: str) -> tuple[dict, dict]:
     # Convert nested defaultdicts to plain dicts for serialization
     def finalize(lexicon: dict[str, dict[str, Any]]) -> dict[str, dict[str, Any]]:
         out = {}
-        for lemma, entry in lexicon.items():
+        for lemma in sorted(lexicon.keys()):
+            entry = lexicon[lemma]
+            pos_counts = entry["pos_counts"]
+            part_of_speech = None
+            if pos_counts:
+                part_of_speech = max(pos_counts.items(), key=lambda x: x[1])[0]
             out[lemma] = {
                 "occurrences": entry["occurrences"],
                 "no_alignments": entry["no_alignments"],
+                "part_of_speech": part_of_speech,
                 "alignments": dict(entry["alignments"]),
             }
         return out

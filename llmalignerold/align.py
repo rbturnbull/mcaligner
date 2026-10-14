@@ -80,7 +80,7 @@ def align_items(
 
     # Merge documents from both databases
     data = merge_data(database1, database2, corpus1, corpus2)
-    if output is not None:
+    if output is not None and Path(output).exists():
         existing_data = load_file(output)
         if set(existing_data.keys()) == set(data.keys()):
             print(f"Loading existing data from {output}")
