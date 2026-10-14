@@ -1,2 +1,13 @@
 results/
 llmalignerold
+.venv/
+.coverage
+htmlcov/
+.pytest_cache/
+__pycache__/
+*.history.jsonl
+*.runs.jsonl
+docs/_build/
+docs/_generated/
+/data/
+/out/
