@@ -7,7 +7,7 @@ import yaml
 from conftest import ARABIC, GREEK, SAMPLE
 from mcparser.corpus import CorpusError, parse_conllu
 
-from llmaligner.convert import build_sentence, convert, corpus_names
+from mcaligner.convert import build_sentence, convert, corpus_names
 
 
 def test_convert_sample(converted):

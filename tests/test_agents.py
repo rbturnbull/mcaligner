@@ -8,12 +8,12 @@ from pydantic_ai.mcp import MCPToolset
 from pydantic_ai.models.function import FunctionModel
 from scripted import align, score, scripted
 
-from llmaligner.agents.outputs import Alignment, Applier, Scores, TaskBatch, parse_links, parse_removals, parse_scores
-from llmaligner.agents.prompts import PairItem, evidence_lines, instructions, pair_block, task_prompt, word_lines
-from llmaligner.agents.team import AlignerTeam, ModelUsage
-from llmaligner.agents.toolset import ReadToolset, compact, parallel_view, read_toolset, translations
-from llmaligner.lexicon import TranslationTable
-from llmaligner.settings import RoleSettings, Settings
+from mcaligner.agents.outputs import Alignment, Applier, Scores, TaskBatch, parse_links, parse_removals, parse_scores
+from mcaligner.agents.prompts import PairItem, evidence_lines, instructions, pair_block, task_prompt, word_lines
+from mcaligner.agents.team import AlignerTeam, ModelUsage
+from mcaligner.agents.toolset import ReadToolset, compact, parallel_view, read_toolset, translations
+from mcaligner.lexicon import TranslationTable
+from mcaligner.settings import RoleSettings, Settings
 
 
 def item(store, sent_id, settled="", review=""):

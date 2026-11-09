@@ -17,7 +17,7 @@ uv run pytest        # 100% line and branch coverage required
 ## Layout
 
 ```text
-llmaligner/
+mcaligner/
   convert.py    old YAML → CoNLL-U + JSONL
   lexicon.py    translation table, lexicon export
   rules.py      code-only links, precision measurement

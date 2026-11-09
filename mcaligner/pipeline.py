@@ -1,7 +1,7 @@
 """The rules → align → score loop over a writable alignment set.
 
 Before the first round, code links what is near-certain (see
-:mod:`llmaligner.rules`). Then each round:
+:mod:`mcaligner.rules`). Then each round:
 
 1. **Align.** The aligner works on pairs it has not seen yet and on pairs with
    links below the threshold, in batches of several pairs per task. Links at or

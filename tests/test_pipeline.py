@@ -7,10 +7,10 @@ from pydantic_ai.exceptions import UserError
 from pydantic_ai.mcp import MCPToolset
 from scripted import align, pairs, score, scripted
 
-from llmaligner.agents.team import AlignerTeam
-from llmaligner.agents.toolset import read_toolset
-from llmaligner.pipeline import Pipeline
-from llmaligner.settings import RoleSettings, Settings
+from mcaligner.agents.team import AlignerTeam
+from mcaligner.agents.toolset import read_toolset
+from mcaligner.pipeline import Pipeline
+from mcaligner.settings import RoleSettings, Settings
 
 
 def make(store, aligner, scorer=None, sent_ids=None, **fields):

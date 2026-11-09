@@ -3,7 +3,7 @@
 ## Evaluate
 
 ```bash
-uv run llmaligner evaluate PRED.jsonl GOLD.jsonl [--annotated-only] [--min-confidence 0.8] [--per-sentence] [--json]
+uv run mcaligner evaluate PRED.jsonl GOLD.jsonl [--annotated-only] [--min-confidence 0.8] [--per-sentence] [--json]
 ```
 
 With A the predicted links, S the gold sure links and P all gold links:
@@ -21,7 +21,7 @@ are micro-averaged.
 ## Lexicon
 
 ```bash
-uv run llmaligner lexicon $SRC -a pred=ar,grc,out/pred.jsonl -o lexicon.yaml [--min-confidence 0.8] [--min-count 2] [--top 5]
+uv run mcaligner lexicon $SRC -a pred=ar,grc,out/pred.jsonl -o lexicon.yaml [--min-confidence 0.8] [--min-count 2] [--top 5]
 ```
 
 ```yaml

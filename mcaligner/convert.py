@@ -1,6 +1,6 @@
 """Convert the old YAML format (both parses + an alignment per verse) to CoNLL-U and JSON Lines.
 
-The old llmaligner kept everything in one YAML file::
+The old mcaligner kept everything in one YAML file::
 
     B10K1V1:
       ArabGr1-Arabic-Ephesians-Parsed:  {text: ..., verse: ..., conllu: ..., id: B10K1V1}

@@ -1,4 +1,4 @@
-# llmaligner — implementation notes
+# mcaligner — implementation notes
 
 Notes for coding agents (Codex, Claude Code) and humans picking up this repo.
 Keep this file current when you change the design or finish a milestone.
@@ -29,7 +29,7 @@ not imported.
 ## Layout
 
 ```
-llmaligner/
+mcaligner/
   convert.py     # old YAML (both parses + alignment per verse) -> 2 CoNLL-U + JSONL alignment set
   evaluate.py    # P/R/F1 over sure and over all links, AER; per pair + micro total
   lexicon.py     # TranslationTable (lemma -> linked lemmas, one pass, leave-one-pair-out) + lexicon export
@@ -54,7 +54,7 @@ tests/           # pytest; tests/data/sample.yaml = verses B10K1V1-3 of results/
   `Gloss=`/`Translit=`/`LTranslit=`/`Root=`) and Greek
   (`ArabGr1-GreekVorlage-Ephesians-Parsed`, PROIEL-style, unaccented forms,
   accented lemmas). `alignment` = old LLM output: **silver**, not gold.
-- `uv run llmaligner convert results/ArabicAligned.yaml -o data/` writes
+- `uv run mcaligner convert results/ArabicAligned.yaml -o data/` writes
   `data/<corpus>.conllu` ×2 and `data/ArabicAligned.jsonl` (`/data/` is ignored).
   Silver totals: 2095 links (1967 S, 128 P); after conversion 2094 links in 155 pairs.
 - Data quirks found by `convert`: 4 Arabic multiword lines have 9 columns
@@ -67,10 +67,10 @@ tests/           # pytest; tests/data/sample.yaml = verses B10K1V1-3 of results/
 ## Design decisions (and why)
 
 - **Package**: uv + hatchling; MCParser (package and CLI `mcparser`, formerly
-  llmparser) by path from its repository `../llmparser`
+  mcparser) by path from its repository `../llmparser`
   (`[tool.uv.sources] mcparser = { path = "../llmparser", editable = true }`).
 - **`mcp serve` / `mcp config`** are MCParser's own typer sub-app
-  (`mcparser.cli.mcp_app`) mounted under `llmaligner mcp`: same options
+  (`mcparser.cli.mcp_app`) mounted under `mcaligner mcp`: same options
   (`--source`, `--alignment`, `--read-only`), and the Claude Desktop config
   runs `python -m mcparser mcp serve`, which is installed in this venv.
 - **`convert`** writes JSONL directly (no store, no history sidecar): it is an
@@ -95,7 +95,7 @@ tests/           # pytest; tests/data/sample.yaml = verses B10K1V1-3 of results/
   — needed when measuring rules on the same data the table comes from. Code uses
   the table (calling `translation_candidates` per word is O(pairs) each); agents
   can still call the MCP tool.
-- **Lexicon export** (`llmaligner lexicon -s ... -a ... [-o x.yaml|x.json]`):
+- **Lexicon export** (`mcaligner lexicon -s ... -a ... [-o x.yaml|x.json]`):
   `{source: {lemma: {part_of_speech, occurrences, unaligned, alignments:
   {lemma: {count, part_of_speech}}}}}`; default `--min-confidence 0.8`. On the
   silver set it reproduces the old `results/ArabicLexicon.yaml` exactly (1138
@@ -104,7 +104,7 @@ tests/           # pytest; tests/data/sample.yaml = verses B10K1V1-3 of results/
 
 ## Rules (no model)
 
-`rules.py`; `llmaligner rules -s ... -a ... --target pred` applies them,
+`rules.py`; `mcaligner rules -s ... -a ... --target pred` applies them,
 `--measure SET [--show-errors]` measures them. Rules only link words that have
 no link yet, only 1-1, only when the match is unique in the pair, and write
 sure links with confidence 0.95 (identical: 0.98), agent `rules`.
@@ -225,10 +225,10 @@ tools can see the answer. 2 rounds, batch 5. Evaluated against silver
 
 - `uv sync --python /opt/homebrew/opt/python@3.13/bin/python3.13` (the
   uv-managed 3.12 is x86_64 and breaks `cryptography`).
-- **MCParser was called llmparser** (2026-10-15 rename): the package and CLI are
+- **MCParser was called mcparser** (2026-10-15 rename): the package and CLI are
   now `mcparser`, but the repository is still `../llmparser`. Imports are
   `from mcparser...`; the Claude Desktop config runs `python -m mcparser`. Older
-  run reports and notes may still say llmparser.
+  run reports and notes may still say mcparser.
 - If `VIRTUAL_ENV` points at MCParser's venv (e.g. from the IDE), uv warns and
   ignores it; `unset VIRTUAL_ENV` to silence it.
 - The test fixture YAML is dumped with escaped tabs (`"1\tبولس..."`), so edit

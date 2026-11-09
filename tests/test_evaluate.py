@@ -4,7 +4,7 @@ import pytest
 from mcparser.corpus import CorpusError
 from mcparser.corpus.alignment import parse_ugarit
 
-from llmaligner.evaluate import count, evaluate, format_report, read_links
+from mcaligner.evaluate import count, evaluate, format_report, read_links
 
 
 def test_counts_and_aer():

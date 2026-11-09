@@ -7,7 +7,7 @@ import pytest
 from mcparser.corpus import CorpusStore
 from pydantic_ai import models
 
-from llmaligner.convert import convert
+from mcaligner.convert import convert
 
 models.ALLOW_MODEL_REQUESTS = False  # never call a real model from the tests
 

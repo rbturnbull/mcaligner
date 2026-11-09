@@ -4,9 +4,9 @@ The agents use MCParser's MCP server in-process. The same server can be run
 for Claude Desktop or other MCP clients:
 
 ```bash
-uv run llmaligner mcp config -s ar=data/A.conllu -s grc=data/B.conllu \
+uv run mcaligner mcp config -s ar=data/A.conllu -s grc=data/B.conllu \
     -a pred=ar,grc,out/pred.jsonl -a silver=ar,grc,data/silver.jsonl:ro
-uv run llmaligner mcp serve ...    # stdio, or --transport streamable-http
+uv run mcaligner mcp serve ...    # stdio, or --transport streamable-http
 ```
 
 `mcp config` prints the `mcpServers` entry for `claude_desktop_config.json`.

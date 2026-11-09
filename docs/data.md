@@ -27,7 +27,7 @@ appended to `<file>.history.jsonl`.
 
 ## Converting the old format
 
-The old llmaligner kept both parses and the alignment of each verse in one
+The old mcaligner kept both parses and the alignment of each verse in one
 YAML file:
 
 ```yaml
@@ -37,7 +37,7 @@ B10K1V1:
   alignment: 1-1S 2-2S 3-3P
 ```
 
-`llmaligner convert` writes `<corpus>.conllu` for each text (`sent_id` = the
+`mcaligner convert` writes `<corpus>.conllu` for each text (`sent_id` = the
 verse id, `# text`, and the other fields as comments) and `<name>.jsonl` with
 the alignments. It pads token lines that lack trailing columns and drops links
 to words that do not exist, and reports both. On `results/ArabicAligned.yaml`
@@ -49,7 +49,7 @@ evidence (read-only), not as gold.
 ## The translation table
 
 Code (the rules, the prompt evidence, the lexicon export) counts translations
-with {class}`~llmaligner.lexicon.TranslationTable`: for every lemma of every
+with {class}`~mcaligner.lexicon.TranslationTable`: for every lemma of every
 aligned source, which lemmas of the other source its words are linked to,
 built in one pass over the sets. A word's lemma falls back to its form. Counts
 are kept per sentence, so the sentence being aligned is always left out of its

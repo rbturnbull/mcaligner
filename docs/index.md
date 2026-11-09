@@ -1,6 +1,6 @@
-# llmaligner
+# mcaligner
 
-llmaligner aligns the **words** of two parsed versions of the same text, for
+mcaligner aligns the **words** of two parsed versions of the same text, for
 example an Arabic translation of Ephesians and its Greek source. Sentences
 (here verses) are paired by `sent_id`, and each word link joins a word of
 text A to a word of text B, written Ugarit style: `3-5S` (sure) or `12-18P`
@@ -17,10 +17,10 @@ old YAML ──convert──▶ A.conllu + B.conllu (+ silver.jsonl)
                          └──lexicon──▶ lemma → aligned lemmas
 ```
 
-It is built on [MCParser](https://github.com/rbturnbull/llmparser): the
+It is built on [MCParser](https://github.com/rbturnbull/mcparser): the
 sentences and the links live in MCParser's corpus store, and the agents reach
 them through MCParser's [MCP](https://modelcontextprotocol.io) server. The
-same server works from Claude Desktop (`llmaligner mcp config`).
+same server works from Claude Desktop (`mcaligner mcp config`).
 
 Main features:
 

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from conftest import parallel_store
 
-from llmaligner.rules import RULE_CONFIDENCE, Proposal, Rules, RuleSettings, measure, romanise, similar, skeleton
+from mcaligner.rules import RULE_CONFIDENCE, Proposal, Rules, RuleSettings, measure, romanise, similar, skeleton
 
 EVIDENCE_A = {f"e{i}": "kai/kai/CCONJ logos/logos/NOUN" for i in range(5)}
 EVIDENCE_B = {f"e{i}": "wa/wa/CCONJ kalima/kalima/NOUN" for i in range(5)}

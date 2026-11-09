@@ -1,6 +1,6 @@
-# Instructions: rebuild llmaligner on top of MCParser
+# Instructions: rebuild mcaligner on top of MCParser
 
-You are working in the `llmaligner` repository. Rebuild it as a new package that
+You are working in the `mcaligner` repository. Rebuild it as a new package that
 uses **MCParser** (the sibling repository `../llmparser`) as a dependency, and
 reaches its data through MCParser's corpus store and MCP server.
 
@@ -12,7 +12,7 @@ Read these first:
 - `../llmparser/mcparser/corpus/alignment.py` and the alignment section at the
   end of `../llmparser/mcparser/corpus/store.py`.
 
-## What llmaligner does
+## What mcaligner does
 
 It aligns the **words** of two parsed versions of the same text, for example an
 Arabic translation of Ephesians (`ArabGr1-Arabic-Ephesians-Parsed`) and its Greek
@@ -64,9 +64,9 @@ The old code is in `llmalignerold/`. Reuse its ideas, but do not import it.
 ## Set up the package
 
 1. Create a new `pyproject.toml` (hatchling build backend; the package lives in
-   `llmaligner/`; a `llmaligner` script pointing to `llmaligner.cli:app`). Depend
+   `mcaligner/`; a `mcaligner` script pointing to `mcaligner.cli:app`). Depend
    on MCParser (package `mcparser`) by path, from its repository `../llmparser`
-   (MCParser was called llmparser before; that PyPI name belongs to someone else):
+   (MCParser was called mcparser before; that PyPI name belongs to someone else):
 
    ```toml
    [project]
@@ -129,7 +129,7 @@ Patterns worth copying, not importing:
 
 ## Proposed design
 
-1. **`llmaligner convert results/ArabicAligned.yaml -o data/`** writes
+1. **`mcaligner convert results/ArabicAligned.yaml -o data/`** writes
    `data/<corpus A>.conllu`, `data/<corpus B>.conllu` (one sentence per verse,
    `sent_id` = verse id, with `# text` and the other fields as comments) and
    `data/<name>.jsonl` with the old alignments. Use them as a silver read-only
@@ -152,13 +152,13 @@ Patterns worth copying, not importing:
    tools for more evidence. Run it on Opus by default.
 4. **Scorer.** Optional; Sonnet by default. It rates links the model made, and
    low-confidence links go back to the aligner in the next round.
-5. **Evaluation: `llmaligner evaluate PRED GOLD`.** Report precision, recall and
+5. **Evaluation: `mcaligner evaluate PRED GOLD`.** Report precision, recall and
    F1 over sure links and over sure+probable links, plus the alignment error
    rate:
    `AER = 1 − (|A∩S| + |A∩P|) / (|A| + |S|)`, where A = predicted links,
    S = gold sure links, P = gold sure+probable links. Make it per sentence and
    overall, with `--annotated-only` semantics like MCParser.
-6. **Lexicon export: `llmaligner lexicon`.** Writes lemma → aligned lemmas (with
+6. **Lexicon export: `mcaligner lexicon`.** Writes lemma → aligned lemmas (with
    counts and POS) from the confident links, like the old `lexicon.py` but built
    from the store.
 7. **CLI** with `convert`, `run` (`--max-sentences`, `--rounds`, `--concurrency`,

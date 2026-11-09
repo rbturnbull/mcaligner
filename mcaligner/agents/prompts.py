@@ -4,7 +4,7 @@ A task covers several sentence pairs. Each pair is rendered compactly: one line
 per word (``id form lemma UPOS head deprel`` and glosses from MISC), the links
 already settled, the links to review, and for each unlinked word how its lemma
 is linked elsewhere (translation evidence). The answers are compact lines that
-code checks and applies (see :mod:`llmaligner.agents.outputs`).
+code checks and applies (see :mod:`mcaligner.agents.outputs`).
 """
 
 from __future__ import annotations

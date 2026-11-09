@@ -10,7 +10,7 @@ import yaml
 from conftest import ARABIC, SAMPLE
 from typer.testing import CliRunner
 
-from llmaligner.cli import app
+from mcaligner.cli import app
 
 runner = CliRunner()
 
@@ -56,9 +56,9 @@ def test_mcp_config(converted):
 
 
 def test_main_module(monkeypatch, capsys):
-    monkeypatch.setattr(sys, "argv", ["llmaligner", "--help"])
+    monkeypatch.setattr(sys, "argv", ["mcaligner", "--help"])
     with pytest.raises(SystemExit) as exit:
-        runpy.run_module("llmaligner", run_name="__main__")
+        runpy.run_module("mcaligner", run_name="__main__")
     assert exit.value.code == 0 and "convert" in capsys.readouterr().out
 
 
@@ -127,8 +127,8 @@ def scripted_team(monkeypatch):
     """Make `run` use scripted models instead of real ones."""
     from scripted import align, score, scripted
 
-    import llmaligner.cli as cli
-    from llmaligner.agents.team import AlignerTeam
+    import mcaligner.cli as cli
+    from mcaligner.agents.team import AlignerTeam
 
     models = {"aligner": scripted(align("2-2 S 0.9")), "scorer": scripted(score(0.9))}
     monkeypatch.setattr(cli, "AlignerTeam", lambda store, target, settings: AlignerTeam(store, target, settings, models=models))
@@ -151,10 +151,10 @@ def test_run_command(converted, scripted_team, tmp_path):
 
 
 def test_run_reports_failures_and_prices(converted, monkeypatch, tmp_path):
-    import llmaligner.cli as cli
-    from llmaligner.agents.team import ModelUsage
-    from llmaligner.pipeline import RunReport, TaskResult
-    from llmaligner.rules import RulesReport
+    import mcaligner.cli as cli
+    from mcaligner.agents.team import ModelUsage
+    from mcaligner.pipeline import RunReport, TaskResult
+    from mcaligner.rules import RulesReport
 
     usage = ModelUsage(tasks=1, requests=1, input_tokens=10, output_tokens=5, cost=0.0123)
 
@@ -189,7 +189,7 @@ def test_run_errors(converted, monkeypatch, tmp_path):
     result = runner.invoke(app, [*base, "--target", "pred", "--settings", str(bad)])
     assert result.exit_code == 1 and "Error:" in result.output
 
-    import llmaligner.cli as cli
+    import mcaligner.cli as cli
     from pydantic_ai.exceptions import UserError
 
     class NoKey:

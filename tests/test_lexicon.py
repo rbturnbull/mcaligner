@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from llmaligner.lexicon import TranslationTable, build_lexicon
+from mcaligner.lexicon import TranslationTable, build_lexicon
 
 
 def test_translation_table(store):

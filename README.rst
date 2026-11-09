@@ -28,18 +28,18 @@ Usage
 .. code-block:: bash
 
    # old YAML (both parses + alignment per verse) -> CoNLL-U files + JSONL alignment set
-   uv run llmaligner convert results/ArabicAligned.yaml -o data/
+   uv run mcaligner convert results/ArabicAligned.yaml -o data/
 
    SRC="-s ar=data/ArabGr1-Arabic-Ephesians-Parsed.conllu -s grc=data/ArabGr1-GreekVorlage-Ephesians-Parsed.conllu"
 
    # rules + aligner/scorer agents; prints tokens and estimated cost
-   uv run llmaligner run $SRC -a silver=ar,grc,data/ArabicAligned.jsonl:ro \
+   uv run mcaligner run $SRC -a silver=ar,grc,data/ArabicAligned.jsonl:ro \
        -a pred=ar,grc,out/pred.jsonl --target pred --max-sentences 5
 
-   uv run llmaligner evaluate out/pred.jsonl gold.jsonl --annotated-only    # P/R/F1, AER
-   uv run llmaligner lexicon $SRC -a pred=ar,grc,out/pred.jsonl -o lexicon.yaml
-   uv run llmaligner rules $SRC -a silver=ar,grc,data/ArabicAligned.jsonl:ro --measure silver
-   uv run llmaligner mcp config $SRC -a pred=ar,grc,out/pred.jsonl          # Claude Desktop
+   uv run mcaligner evaluate out/pred.jsonl gold.jsonl --annotated-only    # P/R/F1, AER
+   uv run mcaligner lexicon $SRC -a pred=ar,grc,out/pred.jsonl -o lexicon.yaml
+   uv run mcaligner rules $SRC -a silver=ar,grc,data/ArabicAligned.jsonl:ro --measure silver
+   uv run mcaligner mcp config $SRC -a pred=ar,grc,out/pred.jsonl          # Claude Desktop
 
 Development
 ===========

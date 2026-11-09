@@ -1,15 +1,15 @@
 # API reference
 
 ```{eval-rst}
-.. automodule:: llmaligner.convert
-.. automodule:: llmaligner.lexicon
-.. automodule:: llmaligner.rules
-.. automodule:: llmaligner.evaluate
-.. automodule:: llmaligner.settings
-.. automodule:: llmaligner.pipeline
-.. automodule:: llmaligner.agents.team
-.. automodule:: llmaligner.agents.outputs
-.. automodule:: llmaligner.agents.prompts
+.. automodule:: mcaligner.convert
+.. automodule:: mcaligner.lexicon
+.. automodule:: mcaligner.rules
+.. automodule:: mcaligner.evaluate
+.. automodule:: mcaligner.settings
+.. automodule:: mcaligner.pipeline
+.. automodule:: mcaligner.agents.team
+.. automodule:: mcaligner.agents.outputs
+.. automodule:: mcaligner.agents.prompts
    :members: PairItem, instructions, task_prompt
-.. automodule:: llmaligner.agents.toolset
+.. automodule:: mcaligner.agents.toolset
 ```

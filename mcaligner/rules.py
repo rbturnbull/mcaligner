@@ -14,7 +14,7 @@ match is unique in the sentence pair. They are:
   translation occurs exactly once in the other sentence and the lemma exactly
   once in this one.
 
-Evidence for the lexicon rule is a :class:`~llmaligner.lexicon.TranslationTable`
+Evidence for the lexicon rule is a :class:`~mcaligner.lexicon.TranslationTable`
 over the given alignment sets, counting only links with confidence of at least
 ``evidence_confidence`` (read-only sets default to 1.0). Rules write links with
 confidence :data:`RULE_CONFIDENCE`, below that, so they never feed themselves;

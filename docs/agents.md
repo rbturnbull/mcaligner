@@ -1,6 +1,6 @@
 # Agents and runs
 
-`llmaligner run` applies the rules, then runs rounds of two
+`mcaligner run` applies the rules, then runs rounds of two
 [pydantic-ai](https://ai.pydantic.dev) agents over a writable alignment set:
 
 1. **Aligner** (strong tier, default `anthropic:claude-opus-5-5`). Works on
@@ -43,12 +43,12 @@ the prompt is not enough; their results are shown in compact text.
 ## Models and settings
 
 ```bash
-uv run llmaligner run ... --model anthropic:claude-sonnet-5-5      # one model for both
-uv run llmaligner run ... --aligner-model ... --scorer-model ...  # per role
-uv run llmaligner run ... --strong-thinking low --no-scorer
+uv run mcaligner run ... --model anthropic:claude-sonnet-5-5      # one model for both
+uv run mcaligner run ... --aligner-model ... --scorer-model ...  # per role
+uv run mcaligner run ... --strong-thinking low --no-scorer
 ```
 
-All options also live in a YAML settings file (`llmaligner settings` prints
+All options also live in a YAML settings file (`mcaligner settings` prints
 the defaults): tiers, per-role `model`, `thinking`, `instructions` and
 `enabled`, `threshold`, `rounds`, `batch_sentences`, `batch_words`,
 `candidates`, `misc_keys`, and the rule settings.

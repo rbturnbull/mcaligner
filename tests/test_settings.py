@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError
 
-from llmaligner.settings import RoleSettings, Settings, parse_thinking
+from mcaligner.settings import RoleSettings, Settings, parse_thinking
 
 
 def test_tiers_and_overrides(tmp_path):

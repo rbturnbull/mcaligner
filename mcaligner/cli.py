@@ -75,7 +75,7 @@ def write_data(data: object, output: Path | None) -> None:
 
 @app.command()
 def convert(
-    input: Annotated[Path, typer.Argument(help="Old llmaligner YAML: {verse: {corpus_a: {...}, corpus_b: {...}, alignment}}.")],
+    input: Annotated[Path, typer.Argument(help="Old mcaligner YAML: {verse: {corpus_a: {...}, corpus_b: {...}, alignment}}.")],
     output: Annotated[Path, typer.Option("--output", "-o", help="Directory for the CoNLL-U and JSONL files.")] = Path("data"),
     name: Annotated[str | None, typer.Option(help="Alignment set name (file stem); default the input's stem.")] = None,
 ) -> None:
