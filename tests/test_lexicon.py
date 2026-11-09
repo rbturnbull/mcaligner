@@ -13,6 +13,8 @@ def test_translation_table(store):
     assert table.candidates("ar", "رَسُول", exclude="B10K1V2")["ἀπόστολος"] == 1
     assert table.candidates("ar", "no such lemma") == {}
     assert apostle.occurrences_without("B10K1V1") == 0 and apostle.occurrences_without(None) == 1
+    colon = table.entry("ar", ":")
+    assert colon.unaligned_without("B10K1V1") == colon.unaligned - 1 and colon.unaligned_without(None) == colon.unaligned
     assert table.candidates("grc", "Ἰησοῦς")["يَسُوع"] == 2
     assert table.part_of_speech("grc", "Ἰησοῦς") == "PROPN"
     assert table.part_of_speech("grc", "nothing") is None

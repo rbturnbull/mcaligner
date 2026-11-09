@@ -17,8 +17,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from llmparser.corpus import CorpusError
-from llmparser.corpus.alignment import Link
+from mcparser.corpus import CorpusError
+from mcparser.corpus.alignment import Link
 from pydantic import BaseModel, Field
 
 

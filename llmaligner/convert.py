@@ -9,7 +9,7 @@ The old llmaligner kept everything in one YAML file::
 
 :func:`convert` writes one CoNLL-U file per corpus (``sent_id`` = the verse id,
 ``# text`` and the other fields as comments) and the alignments as an
-llmparser alignment set (JSON Lines), which can then be loaded read-only as
+MCParser alignment set (JSON Lines), which can then be loaded read-only as
 silver data or used as the start of a writable set.
 """
 
@@ -19,8 +19,8 @@ import json
 from pathlib import Path
 
 import yaml
-from llmparser.corpus import CorpusError, Sentence, format_conllu, parse_conllu
-from llmparser.corpus.alignment import Link, parse_ugarit
+from mcparser.corpus import CorpusError, Sentence, format_conllu, parse_conllu
+from mcparser.corpus.alignment import Link, parse_ugarit
 from pydantic import BaseModel, Field
 
 ALIGNMENT_KEYS = ("alignment", "align")

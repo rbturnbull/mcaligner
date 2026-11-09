@@ -32,8 +32,8 @@ from collections import Counter
 from collections.abc import Iterable
 from difflib import SequenceMatcher
 
-from llmparser.corpus import CorpusStore, Sentence, Token
-from llmparser.corpus.alignment import Link
+from mcparser.corpus import CorpusStore, Sentence, Token
+from mcparser.corpus.alignment import Link
 from pydantic import BaseModel, Field
 
 from .lexicon import TranslationTable, lemma_of

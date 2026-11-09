@@ -120,3 +120,94 @@ def test_rules_errors(converted):
     assert result.exit_code == 1 and "read-only" in result.output
     result = runner.invoke(app, ["rules", *specs(converted), "--measure", "silver", "--min-share", "0.2"])
     assert result.exit_code == 1 and "Error:" in result.output
+
+
+@pytest.fixture
+def scripted_team(monkeypatch):
+    """Make `run` use scripted models instead of real ones."""
+    from scripted import align, score, scripted
+
+    import llmaligner.cli as cli
+    from llmaligner.agents.team import AlignerTeam
+
+    models = {"aligner": scripted(align("2-2 S 0.9")), "scorer": scripted(score(0.9))}
+    monkeypatch.setattr(cli, "AlignerTeam", lambda store, target, settings: AlignerTeam(store, target, settings, models=models))
+    return models
+
+
+def test_run_command(converted, scripted_team, tmp_path):
+    pred = converted.alignment.parent / "pred.jsonl"
+    report = tmp_path / "report.json"
+    args = [*specs(converted), "-a", f"pred=ar,grc,{pred}", "--target", "pred", "--max-sentences", "2",
+            "--rounds", "1", "--strong-thinking", "low", "--report", str(report)]  # fmt: skip
+    result = runner.invoke(app, ["run", *args])
+    assert result.exit_code == 0, result.output
+    assert "Rules linked" in result.output and "Round 1: aligned 2 pairs, scored 2" in result.output
+    assert "total: 2 tasks" in result.output and "no price" in result.output  # one aligner, one scorer task
+    assert json.loads(report.read_text(encoding="utf-8"))["pairs"] == 2
+    assert len(pred.with_name("pred.jsonl.runs.jsonl").read_text(encoding="utf-8").splitlines()) == 1
+    result = runner.invoke(app, ["run", *args[:-2], "--sentence", "B10K1V3", "--no-scorer"])
+    assert result.exit_code == 0 and "aligned 1 pairs, scored 0" in result.output
+
+
+def test_run_reports_failures_and_prices(converted, monkeypatch, tmp_path):
+    import llmaligner.cli as cli
+    from llmaligner.agents.team import ModelUsage
+    from llmaligner.pipeline import RunReport, TaskResult
+    from llmaligner.rules import RulesReport
+
+    usage = ModelUsage(tasks=1, requests=1, input_tokens=10, output_tokens=5, cost=0.0123)
+
+    class FakePipeline:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        async def run(self):
+            return RunReport(
+                target="pred", pairs=1, links=0, low_confidence=0, mean_confidence=0.0, rounds=[], rules=RulesReport(),
+                tasks=[TaskResult(round=1, role="aligner", sent_ids=["x"], error="boom")], total=usage, usage={"m": usage},
+            )  # fmt: skip
+
+    monkeypatch.setattr(cli, "Pipeline", FakePipeline)
+    pred = converted.alignment.parent / "pred.jsonl"
+    result = runner.invoke(app, ["run", *specs(converted), "-a", f"pred=ar,grc,{pred}", "--target", "pred"])
+    assert result.exit_code == 0, result.output
+    assert "1 failed tasks" in result.output and "$0.0123" in result.output
+
+
+def test_run_errors(converted, monkeypatch, tmp_path):
+    pred = converted.alignment.parent / "pred.jsonl"
+    base = ["run", *specs(converted), "-a", f"pred=ar,grc,{pred}"]
+    result = runner.invoke(app, [*base, "--target", "nope"])
+    assert result.exit_code == 1 and "No alignment named 'nope'" in result.output
+    result = runner.invoke(app, [*base, "--target", "pred", "--strong-thinking", "lots"])
+    assert result.exit_code == 1 and "Thinking must be" in result.output
+    result = runner.invoke(app, [*base, "--target", "pred", "--threshold", "2"])
+    assert result.exit_code == 1 and "Error:" in result.output
+    bad = tmp_path / "bad.yaml"
+    bad.write_text("rounds: zero\n", encoding="utf-8")
+    result = runner.invoke(app, [*base, "--target", "pred", "--settings", str(bad)])
+    assert result.exit_code == 1 and "Error:" in result.output
+
+    import llmaligner.cli as cli
+    from pydantic_ai.exceptions import UserError
+
+    class NoKey:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        async def run(self):
+            raise UserError("Set ANTHROPIC_API_KEY")
+
+    monkeypatch.setattr(cli, "Pipeline", NoKey)
+    result = runner.invoke(app, [*base, "--target", "pred"])
+    assert result.exit_code == 1 and "ANTHROPIC_API_KEY" in result.output
+
+
+def test_settings_command(tmp_path):
+    result = runner.invoke(app, ["settings"])
+    assert result.exit_code == 0 and "strong_model: anthropic:claude-opus-5-5" in result.output
+    path = tmp_path / "s.yaml"
+    path.write_text("rounds: 5\n", encoding="utf-8")
+    assert "rounds: 5" in runner.invoke(app, ["settings", "--settings", str(path)]).output
+    assert runner.invoke(app, ["settings", "--settings", str(tmp_path / "missing.yaml")]).exit_code == 1

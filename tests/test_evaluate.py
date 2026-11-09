@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import pytest
-from llmparser.corpus import CorpusError
-from llmparser.corpus.alignment import parse_ugarit
+from mcparser.corpus import CorpusError
+from mcparser.corpus.alignment import parse_ugarit
 
 from llmaligner.evaluate import count, evaluate, format_report, read_links
 

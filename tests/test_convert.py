@@ -5,7 +5,7 @@ import json
 import pytest
 import yaml
 from conftest import ARABIC, GREEK, SAMPLE
-from llmparser.corpus import CorpusError, parse_conllu
+from mcparser.corpus import CorpusError, parse_conllu
 
 from llmaligner.convert import build_sentence, convert, corpus_names
 

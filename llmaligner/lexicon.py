@@ -2,7 +2,7 @@
 
 :class:`TranslationTable` counts, for every lemma of every aligned source,
 which lemmas of the other source its words are linked to. It is the same count
-as llmparser's ``translation_candidates`` tool (a word's lemma falls back to its
+as MCParser's ``translation_candidates`` tool (a word's lemma falls back to its
 form; only links with at least ``min_confidence`` count), but built in one
 pass over the sets, so code can look up thousands of words cheaply. The counts
 of each sentence are kept, so a sentence's own links can be left out
@@ -18,11 +18,11 @@ from collections import Counter
 from collections.abc import Iterable
 from dataclasses import dataclass, field
 
-from llmparser.corpus import CorpusStore, NotFoundError, Token
-from llmparser.corpus.conllu import EMPTY
+from mcparser.corpus import CorpusStore, NotFoundError, Token
+from mcparser.corpus.conllu import EMPTY
 
 def lemma_of(word: Token) -> str:
-    """The word's lemma, or its form if the lemma is empty (as in llmparser)."""
+    """The word's lemma, or its form if the lemma is empty (as in MCParser)."""
     return word.lemma if word.lemma != EMPTY else word.form
 
 
@@ -37,6 +37,7 @@ class Entry:
     by_sentence: dict[str, Counter[str]] = field(default_factory=dict)
     """Translations counted in each sentence (to leave one out)."""
     occurrences_by_sentence: Counter[str] = field(default_factory=Counter)
+    unaligned_by_sentence: Counter[str] = field(default_factory=Counter)
 
     def candidates(self, exclude: str | None = None) -> Counter[str]:
         """Translations, without those counted in sentence ``exclude``."""
@@ -46,6 +47,9 @@ class Entry:
 
     def occurrences_without(self, exclude: str | None = None) -> int:
         return self.occurrences - (self.occurrences_by_sentence[exclude] if exclude is not None else 0)
+
+    def unaligned_without(self, exclude: str | None = None) -> int:
+        return self.unaligned - (self.unaligned_by_sentence[exclude] if exclude is not None else 0)
 
     @property
     def part_of_speech(self) -> str | None:
@@ -100,6 +104,7 @@ class TranslationTable:
             partners = [lemma_of(other[i]) for i in linked.get(word.id, []) if i in other]
             if not partners:
                 entry.unaligned += 1
+                entry.unaligned_by_sentence[sent_id] += 1
             for partner in partners:
                 entry.translations[partner] += 1
                 entry.by_sentence.setdefault(sent_id, Counter())[partner] += 1

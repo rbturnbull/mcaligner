@@ -1,16 +1,16 @@
-# Instructions: rebuild llmaligner on top of llmparser
+# Instructions: rebuild llmaligner on top of MCParser
 
 You are working in the `llmaligner` repository. Rebuild it as a new package that
-uses **llmparser** (the sibling repository `../llmparser`) as a dependency, and
-reaches its data through llmparser's corpus store and MCP server.
+uses **MCParser** (the sibling repository `../llmparser`) as a dependency, and
+reaches its data through MCParser's corpus store and MCP server.
 
 Read these first:
 
 - `../llmparser/AGENTS.md`: design decisions, conventions and environment gotchas
   (most apply here too).
 - `../llmparser/docs/alignment.md`: the alignment support built for this project.
-- `../llmparser/llmparser/corpus/alignment.py` and the alignment section at the
-  end of `../llmparser/llmparser/corpus/store.py`.
+- `../llmparser/mcparser/corpus/alignment.py` and the alignment section at the
+  end of `../llmparser/mcparser/corpus/store.py`.
 
 ## What llmaligner does
 
@@ -29,7 +29,7 @@ The old code is in `llmalignerold/`. Reuse its ideas, but do not import it.
 - `align.py` + `prompt.py`: one LangChain prompt per verse with retrieved
   example verses; the LLM returns a Ugarit string.
 - `lexicon.py`: builds lemma → aligned-lemma counts from the alignments.
-- `database/`: retriv/chroma retrieval. Do not reuse it; llmparser has search.
+- `database/`: retriv/chroma retrieval. Do not reuse it; MCParser has search.
 - Data: `results/ArabicAligned.yaml` (untracked) holds 155 verses. Each verse has
   the CoNLL-U of both texts and an `alignment` string produced by the old LLM
   run. It is silver data, not gold. `results/ArabicLexicon.yaml` is the old
@@ -38,7 +38,7 @@ The old code is in `llmalignerold/`. Reuse its ideas, but do not import it.
 ## Requirements (from the project owner)
 
 - **uv** for packaging, **typer** for the CLI, **pydantic-ai** for agents.
-- All data access by the agents goes through **llmparser's MCP server**
+- All data access by the agents goes through **MCParser's MCP server**
   (in-process via `pydantic_ai.mcp.MCPToolset(build_server(store))`).
 - **Fast tests with 100% line and branch coverage**, enforced with
   `--cov-fail-under=100`. No network in tests: use pydantic-ai `FunctionModel`
@@ -48,7 +48,7 @@ The old code is in `llmalignerold/`. Reuse its ideas, but do not import it.
   with `-W`.
 - Keep an `AGENTS.md` with implementation notes, and a `CLAUDE.md` containing
   `@AGENTS.md`.
-- Cost matters: the owner will run thousands of sentences. Follow llmparser's
+- Cost matters: the owner will run thousands of sentences. Follow MCParser's
   approach:
   - code-only rules before models;
   - batches of several sentence pairs per task;
@@ -57,23 +57,23 @@ The old code is in `llmalignerold/`. Reuse its ideas, but do not import it.
   - model tiers (default `anthropic:claude-opus-5-5`, with Sonnet 5.5 and Haiku
     5.5 tiers) and per-role overrides;
   - prompt caching;
-  - a token and cost report after every run (reuse `llmparser.pricing.estimate`).
-- If the aligner needs new store or MCP functionality, **add it to llmparser**
+  - a token and cost report after every run (reuse `mcparser.pricing.estimate`).
+- If the aligner needs new store or MCP functionality, **add it to MCParser**
   (with tests at 100%), not here, and keep it generic. Then use it from here.
 
 ## Set up the package
 
 1. Create a new `pyproject.toml` (hatchling build backend; the package lives in
    `llmaligner/`; a `llmaligner` script pointing to `llmaligner.cli:app`). Depend
-   on llmparser by path, because the name `llmparser` on PyPI belongs to someone
-   else:
+   on MCParser (package `mcparser`) by path, from its repository `../llmparser`
+   (MCParser was called llmparser before; that PyPI name belongs to someone else):
 
    ```toml
    [project]
-   dependencies = ["llmparser", "pydantic-ai-slim[anthropic,mcp]", "typer", "pyyaml"]
+   dependencies = ["mcparser", "pydantic-ai-slim[anthropic,mcp]", "typer", "pyyaml"]
 
    [tool.uv.sources]
-   llmparser = { path = "../llmparser", editable = true }
+   mcparser = { path = "../llmparser", editable = true }
 
    [dependency-groups]
    dev = ["pytest>=8", "pytest-cov>=5"]
@@ -86,11 +86,11 @@ The old code is in `llmalignerold/`. Reuse its ideas, but do not import it.
 3. Remove the old `.venv`, `htmlcov`, `.coverage` and `.pytest_cache`. They are
    from the Poetry setup.
 
-## What llmparser already provides
+## What MCParser already provides
 
 ```python
-from llmparser.corpus import CorpusStore
-from llmparser.mcp import build_server, AlignmentSpec, SourceSpec, load_store
+from mcparser.corpus import CorpusStore
+from mcparser.mcp import build_server, AlignmentSpec, SourceSpec, load_store
 
 store = CorpusStore()
 store.add_source("ar", "data/arabic.conllu")              # read-only by default
@@ -113,19 +113,19 @@ Store methods (all of them are also MCP tools):
 Also useful:
 - the monolingual tools: `analyse_form`, `find_tokens` (`suffix=`,
   `previous_form=`), `find_arcs`, `relation_stats`, `get_sentence`;
-- `parse_ugarit` / `format_ugarit` in `llmparser.corpus.alignment`.
+- `parse_ugarit` / `format_ugarit` in `mcparser.corpus.alignment`.
 
 The alignment file is JSON Lines, one pair per line:
 `{"sent_id": ..., "links": [{"source": "1", "target": "2", "sure": true, "confidence": 0.9}]}`.
 Every edit is appended to `<file>.history.jsonl`.
 
 Patterns worth copying, not importing:
-- `llmparser/agents/toolset.py`: restricting the tools each agent sees;
-- `llmparser/agents/outputs.py`: compact answers validated and applied in an
+- `mcparser/agents/toolset.py`: restricting the tools each agent sees;
+- `mcparser/agents/outputs.py`: compact answers validated and applied in an
   output validator, with errors sent back as `ModelRetry`;
-- `llmparser/pipeline.py`: rounds, batching, concurrency, the run report;
-- `llmparser/rules.py`: code-only rules with a minimum count and share;
-- `llmparser/settings.py`: model tiers and YAML settings.
+- `mcparser/pipeline.py`: rounds, batching, concurrency, the run report;
+- `mcparser/rules.py`: code-only rules with a minimum count and share;
+- `mcparser/settings.py`: model tiers and YAML settings.
 
 ## Proposed design
 
@@ -143,7 +143,7 @@ Patterns worth copying, not importing:
      candidate is the only possible match in the other sentence.
    
    Measure the precision of every rule on the data before relying on it, as
-   llmparser does.
+   MCParser does.
 3. **Aligner agent.** It works on batches of sentence pairs. Its prompt gives
    both sentences (compact CoNLL-U), the links that are already settled, and for
    each unlinked word its top `translation_candidates`. The answer has one line
@@ -157,13 +157,13 @@ Patterns worth copying, not importing:
    rate:
    `AER = 1 − (|A∩S| + |A∩P|) / (|A| + |S|)`, where A = predicted links,
    S = gold sure links, P = gold sure+probable links. Make it per sentence and
-   overall, with `--annotated-only` semantics like llmparser.
+   overall, with `--annotated-only` semantics like MCParser.
 6. **Lexicon export: `llmaligner lexicon`.** Writes lemma → aligned lemmas (with
    counts and POS) from the confident links, like the old `lexicon.py` but built
    from the store.
 7. **CLI** with `convert`, `run` (`--max-sentences`, `--rounds`, `--concurrency`,
    tier and model options, `--report`), `evaluate`, `lexicon`, and `mcp serve` /
-   `mcp config`. The last two can call llmparser's `build_server` /
+   `mcp config`. The last two can call MCParser's `build_server` /
    `claude_desktop_config` with `--source` and `--alignment` options.
 
 ## Milestones
@@ -180,7 +180,7 @@ Patterns worth copying, not importing:
 Ask the owner before spending more than a couple of dollars on real model runs.
 Each run's cost is printed at the end.
 
-## Gotchas (from llmparser)
+## Gotchas (from MCParser)
 
 - **mcp is 2.x.** `FastMCP` is now `mcp.server.MCPServer`. Raise
   `mcp.server.mcpserver.exceptions.ToolError` for messages the model should see.
@@ -190,10 +190,10 @@ Each run's cost is printed at the end.
   - Build agents with `defer_model_check=True`, so tests do not need an API key.
   - Models sometimes send a list argument as a JSON string; accept both.
 - **Logging.** `MCPServer(log_level=...)` configures the root logger.
-  llmparser's `build_server` defaults to WARNING; keep it, or every HTTP request
+  MCParser's `build_server` defaults to WARNING; keep it, or every HTTP request
   is logged.
 - **Docs.** typer vendors its own click, so sphinx-click cannot document the
-  CLI. llmparser's `docs/conf.py` instead renders `--help` output into
+  CLI. MCParser's `docs/conf.py` instead renders `--help` output into
   `docs/_generated/cli.md`; copy that approach.
 - **API key and tests.** `ANTHROPIC_API_KEY` is set on the owner's machine,
   which is why the tests must disable model requests.

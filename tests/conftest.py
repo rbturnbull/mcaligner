@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 
 import pytest
-from llmparser.corpus import CorpusStore
+from mcparser.corpus import CorpusStore
 from pydantic_ai import models
 
 from llmaligner.convert import convert
