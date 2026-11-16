@@ -1,5 +1,17 @@
+|logo| |text|
+
+.. |logo| image:: https://raw.githubusercontent.com/rbturnbull/mcaligner/main/docs/_static/mc.svg
+   :alt: MCAligner logo
+   :height: 220px
+   :align: middle
+
+.. |text| image:: https://raw.githubusercontent.com/rbturnbull/mcaligner/main/docs/_static/mcaligner-text.svg
+   :alt: MCAligner
+   :height: 220px
+   :align: middle
+
 =========================
-LLM Aligner
+MCAligner
 =========================
 
 Word alignment of parallel texts (e.g. a translation and its source) with LLM

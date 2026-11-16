@@ -1,5 +1,13 @@
 # mcaligner
 
+```{raw} html
+<div style="display:flex;align-items:center;justify-content:center;gap:1.5rem;flex-wrap:wrap;margin:1rem 0 2rem">
+  <img src="_static/mc.svg" alt="MCAligner logo: a rotating cube" width="160" height="160">
+  <img class="only-light" src="_static/mcaligner-text.svg" alt="MCAligner, word alignment with LLM agents built on MCP" width="420">
+  <img class="only-dark" src="_static/mcaligner-text-dark.svg" alt="MCAligner, word alignment with LLM agents built on MCP" width="420">
+</div>
+```
+
 mcaligner aligns the **words** of two parsed versions of the same text, for
 example an Arabic translation of Ephesians and its Greek source. Sentences
 (here verses) are paired by `sent_id`, and each word link joins a word of
