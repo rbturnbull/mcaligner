@@ -38,3 +38,35 @@ def test_parse_thinking():
     assert parse_thinking("off") is False and parse_thinking("On") is True and parse_thinking("high") == "high"
     with pytest.raises(ValueError, match="Thinking must be"):
         parse_thinking("lots")
+
+
+def test_guidelines(tmp_path):
+    default = Settings()
+    assert default.guidelines == "grc-lat" and "Do **not align punctuation**" in default.guidelines_text
+    assert Settings(guidelines="none").guidelines is None and Settings(guidelines=None).guidelines_text is None
+    assert Settings(guidelines="").guidelines_text is None
+    own = tmp_path / "mine.md"
+    own.write_text("Align everything.\n", encoding="utf-8")
+    assert Settings(guidelines=str(own)).guidelines_text == "Align everything."
+    with pytest.raises(ValidationError, match="No guidelines 'nowhere'"):
+        Settings(guidelines="nowhere")
+    assert default.with_overrides(guidelines="none").guidelines is None
+    assert default.with_overrides().guidelines == "grc-lat"
+
+
+def test_link_punctuation_override():
+    assert Settings().rules.link_punctuation is False
+    assert Settings().with_overrides(link_punctuation=True).rules.link_punctuation is True
+    assert Settings().with_overrides(link_punctuation=None).rules.link_punctuation is False
+
+
+def test_columns_and_tools_settings():
+    default = Settings()
+    assert default.columns == ["lemma", "upos", "head", "deprel"] and default.tools is None
+    assert Settings(columns=["feats", "lemma"]).columns == ["lemma", "feats"]  # kept in the standard order
+    assert Settings(columns=[]).columns == [] and Settings(tools=[]).tools == []
+    with pytest.raises(ValidationError, match="Unknown columns"):
+        Settings(columns=["gloss"])
+    with pytest.raises(ValidationError, match="Unknown tools"):
+        Settings(tools=["set_links"])
+    assert default.with_overrides(columns=[], tools=[]).columns == []

@@ -3,8 +3,9 @@
 Rules only add links between words that have no link yet, and only when the
 match is unique in the sentence pair. They are:
 
-* **identical** — punctuation, numerals and symbols (or other forms without
-  letters) written the same on both sides;
+* **identical** — numerals and symbols (or other forms without letters) written
+  the same on both sides; punctuation only with ``link_punctuation``, since
+  alignment guidelines such as Ugarit's never align it;
 * **names** — a proper noun on one side whose romanisation matches a word on
   the other side (consonant skeletons; the Arabic MISC ``LTranslit=`` /
   ``Translit=`` are used when present, Greek is romanised from the lemma);
@@ -55,11 +56,23 @@ CONSONANT_CLASSES = str.maketrans({"p": "b", "f": "b", "v": "b", "d": "t", "g": 
 DROPPED = re.compile(r"[aeiouywhj]")
 
 
+def is_punctuation(word: Token) -> bool:
+    """UPOS PUNCT, or a form without any letter or digit."""
+    return word.upos == "PUNCT" or not any(char.isalnum() for char in word.form)
+
+
 class RuleSettings(BaseModel):
     min_count: int = Field(5, ge=1, description="Linked occurrences of a lemma needed before the lexicon rule fires.")
     min_share: float = Field(0.95, gt=0.5, le=1, description="Share of the lemma's occurrences linked to that translation.")
     evidence_confidence: float = Field(EVIDENCE_CONFIDENCE, ge=0, le=1, description="Links count as evidence from this confidence.")
     name_similarity: float = Field(0.9, gt=0, le=1, description="Skeleton similarity for names (short skeletons must be equal).")
+    link_punctuation: bool = Field(
+        False,
+        description=(
+            "Allow links to punctuation, by the identical rule and by the aligner (alignment guidelines such as "
+            "Ugarit's never align it, so links to punctuation are dropped in code)."
+        ),
+    )
     rules: list[str] = Field(["identical", "names", "lexicon"], description="Rules to apply, in order.")
 
 
@@ -166,6 +179,8 @@ class Rules:
 
     def identical(self, sent_id: str, a: list[Token], b: list[Token]) -> list[Proposal]:
         def symbol(word: Token) -> bool:
+            if not self.settings.link_punctuation and is_punctuation(word):
+                return False
             return word.upos in SYMBOL_TAGS or not has_letters(word.form)
 
         forms_b = self._unique(b, lambda word: word.form)

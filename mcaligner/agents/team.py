@@ -10,6 +10,7 @@ from mcparser.pricing import estimate
 from pydantic import BaseModel, Field
 from pydantic_ai import Agent, RunContext
 from pydantic_ai.mcp import MCPToolset
+from pydantic_ai.messages import ModelResponse, RetryPromptPart, ToolCallPart
 from pydantic_ai.models import Model
 from pydantic_ai.settings import ModelSettings
 from pydantic_ai.toolsets import AbstractToolset
@@ -19,9 +20,18 @@ from ..mcp import build_server
 from ..settings import Settings
 from .outputs import Alignment, Applier, Scores, TaskBatch
 from .prompts import instructions
-from .toolset import read_toolset
+from .toolset import READ_TOOLS, read_toolset
 
 Answer = Alignment | Scores
+
+
+class Details(BaseModel):
+    """What happened inside one agent task."""
+
+    requests: int = 0
+    tools: dict[str, int] = Field(default_factory=dict, description="Tool calls by tool name.")
+    retries: list[str] = Field(default_factory=list, description="Why the model was asked again.")
+    dropped: int = Field(0, description="Links to punctuation that code removed from the answer.")
 USAGE_FIELDS = ("tasks", "requests", "input_tokens", "cache_read_tokens", "cache_write_tokens", "output_tokens")
 
 
@@ -68,7 +78,7 @@ class AlignerTeam:
         self.settings = settings
         self.models = dict(models or {})
         self.toolset = toolset or MCPToolset(build_server(store))
-        self.applier = Applier(store)
+        self.applier = Applier(store, settings.rules.link_punctuation)
         self._agents: dict[str, Agent[TaskBatch, Answer]] = {}
         self.usage: dict[str, ModelUsage] = {}
         """Token use and estimated cost per model."""
@@ -96,10 +106,11 @@ class AlignerTeam:
                 deps_type=TaskBatch,
                 instructions=instructions(
                     role, aset.source_a.name, aset.source_b.name, self.target, self.settings.threshold,
-                    self.settings.role(role).instructions,
+                    self.settings.role(role).instructions, self.settings.guidelines_text,
+                    self.settings.columns, self.settings.tools,
                 ),  # fmt: skip
                 output_type=Alignment if role == "aligner" else Scores,
-                toolsets=[read_toolset(self.toolset)],
+                toolsets=[read_toolset(self.toolset, self.settings.tools)],
                 retries=3,
                 model_settings=self.model_settings(role),
                 defer_model_check=True,
@@ -120,13 +131,28 @@ class AlignerTeam:
     async def __aexit__(self, *args: Any) -> None:
         await self.toolset.__aexit__(*args)
 
-    async def run(self, role: str, prompt: str, batch: TaskBatch) -> Answer:
-        """Run ``role`` on a task; the answer is applied when it is accepted."""
+    async def run(self, role: str, prompt: str, batch: TaskBatch, details: Details | None = None) -> Answer:
+        """Run ``role`` on a task; the answer is applied when it is accepted.
+
+        If ``details`` is given, the task's requests, tool calls (by tool) and the messages that made the model
+        retry are added to it.
+        """
         result = await self.agent(role).run(
             prompt, deps=batch, usage_limits=UsageLimits(request_limit=self.settings.request_limit)
         )
         name = self.model_name(self.model(role))
         self.usage.setdefault(name, ModelUsage()).add(result.usage, name)
+        if details is not None:
+            details.dropped += batch.dropped
+            details.requests += result.usage.requests
+            for message in result.all_messages():
+                parts = message.parts
+                if isinstance(message, ModelResponse):
+                    for part in parts:
+                        if isinstance(part, ToolCallPart) and part.tool_name in READ_TOOLS:
+                            details.tools[part.tool_name] = details.tools.get(part.tool_name, 0) + 1
+                else:  # a ModelRequest
+                    details.retries += [str(part.content)[:300] for part in parts if isinstance(part, RetryPromptPart)]
         return result.output
 
     def total(self) -> ModelUsage:

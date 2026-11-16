@@ -3,8 +3,8 @@
 The aligner answers with one line per link, the scorer with one line per
 rating::
 
-    B10K1V1 3-5 S 0.95        aligner: SENT_ID A-B S|P CONFIDENCE
-    B10K1V1 3-5 0.9           scorer:  SENT_ID A-B CONFIDENCE
+    <id> 3-5 S 0.95              aligner: SENT_ID A-B S|P CONFIDENCE
+    <id> 3-5 0.9                 scorer:  SENT_ID A-B CONFIDENCE
 
 Nothing is written until the whole answer is valid: unknown pairs, malformed
 lines and links to words that do not exist (checked with
@@ -22,6 +22,8 @@ from mcparser.corpus.alignment import Link
 from pydantic import BaseModel, Field
 from pydantic_ai import ModelRetry
 
+from ..rules import is_punctuation
+
 ALIGNER_AGENT = "aligner"
 SCORER_AGENT = "scorer"
 
@@ -35,7 +37,7 @@ class Alignment(BaseModel):
 
     links: str = Field(
         description=(
-            'One line per link, "SENT_ID A-B S|P CONFIDENCE", e.g. "B10K1V1 3-5 S 0.95". '
+            'One line per link, "SENT_ID A-B S|P CONFIDENCE", e.g. "<id> 3-5 S 0.95", with <id> the pair id exactly as in its "## Pair" heading. '
             "Settled links are kept without listing them."
         )
     )
@@ -46,7 +48,7 @@ class Alignment(BaseModel):
 class Scores(BaseModel):
     """Your answer: a confidence for each link to score."""
 
-    scores: str = Field(description='One line per link, "SENT_ID A-B CONFIDENCE", e.g. "B10K1V1 3-5 0.9".')
+    scores: str = Field(description='One line per link, "SENT_ID A-B CONFIDENCE", e.g. "<id> 3-5 0.9", with <id> the pair id exactly as in its "## Pair" heading.')
     summary: str = Field("", description="At most 15 words.")
 
 
@@ -60,6 +62,8 @@ class TaskBatch:
     """Aligner: the links shown as settled, per pair (they are kept)."""
     review: dict[str, list[Link]] = field(default_factory=dict)
     """Scorer: the links to score, per pair."""
+    dropped: int = 0
+    """Aligner: links to punctuation that code removed from the answer."""
 
 
 def _lines(text: str) -> list[str]:
@@ -131,8 +135,20 @@ def parse_scores(text: str, batch: TaskBatch) -> tuple[dict[str, dict[str, float
 class Applier:
     """Checks an agent's answer against the store, then applies it."""
 
-    def __init__(self, store: CorpusStore):
+    def __init__(self, store: CorpusStore, link_punctuation: bool = False):
         self.store = store
+        self.link_punctuation = link_punctuation
+
+    def without_punctuation(self, batch: TaskBatch, links: dict[str, list[Link]]) -> dict[str, list[Link]]:
+        """The answer's links without those that touch punctuation (counted in ``batch.dropped``)."""
+        aset = self.store.alignment(batch.target)
+        kept, batch.dropped = {}, 0  # reset: a retried answer is filtered again
+        for sent_id, group in links.items():
+            skip_a = {w.id for w in aset.source_a.sentence(sent_id).words if is_punctuation(w)}
+            skip_b = {w.id for w in aset.source_b.sentence(sent_id).words if is_punctuation(w)}
+            kept[sent_id] = [link for link in group if link.source not in skip_a and link.target not in skip_b]
+            batch.dropped += len(group) - len(kept[sent_id])
+        return kept
 
     @staticmethod
     def _retry(errors: list[str]) -> None:
@@ -147,6 +163,8 @@ class Applier:
 
     def alignment(self, answer: Alignment, batch: TaskBatch) -> Alignment:
         links, errors = parse_links(answer.links, batch)
+        if not self.link_punctuation and not errors:
+            links = self.without_punctuation(batch, links)
         removals, removal_errors = parse_removals(answer.remove, batch)
         errors += removal_errors
         new = {sent_id: self.merged(batch, sent_id, links.get(sent_id, []), removals.get(sent_id, set())) for sent_id in batch.sent_ids}

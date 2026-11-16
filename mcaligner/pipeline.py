@@ -27,7 +27,7 @@ from pydantic_ai.exceptions import UserError
 
 from .agents.outputs import ALIGNER_AGENT, TaskBatch
 from .agents.prompts import PairItem, task_prompt
-from .agents.team import AlignerTeam, ModelUsage
+from .agents.team import AlignerTeam, Details, ModelUsage
 from .lexicon import TranslationTable
 from .rules import RULE_AGENT, RuleCount, Rules, RulesReport
 from .settings import Settings
@@ -39,6 +39,7 @@ class TaskResult(BaseModel):
     sent_ids: list[str]
     summary: str | None = None
     error: str | None = None
+    details: Details = Details()
 
 
 class RoundReport(BaseModel):
@@ -200,7 +201,7 @@ class Pipeline:
 
     async def _task(self, role: str, items: list[PairItem], table: TranslationTable | None) -> None:
         sent_ids = [item.sent_id for item in items]
-        result = TaskResult(round=self.round, role=role, sent_ids=sent_ids)
+        result = TaskResult(round=self.round, role=role, sent_ids=sent_ids, details=Details())
         label = f"[round {self.round}] {role} {', '.join(sent_ids)}"
         if role == "aligner":
             batch = TaskBatch(self.target, sent_ids, settled={item.sent_id: item.settled for item in items})
@@ -210,9 +211,9 @@ class Pipeline:
             names = (self.alignment.source_a.name, self.alignment.source_b.name)
             prompt = task_prompt(
                 role, items, {i: self.confidence(i) for i in sent_ids}, table, names,
-                self.settings.misc_keys, self.settings.candidates,
+                self.settings.misc_keys, self.settings.candidates, self.settings.columns,
             )  # fmt: skip
-            answer = await self.team.run(role, prompt, batch)
+            answer = await self.team.run(role, prompt, batch, result.details)
             result.summary = answer.summary
             if role == "scorer":
                 for sent_id in sent_ids:

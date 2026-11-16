@@ -7,7 +7,7 @@ identical symbols) and agent `rules`.
 
 | Rule | Links when |
 |---|---|
-| `identical` | the same punctuation, numeral or symbol (or other form without letters) occurs once on each side |
+| `identical` | the same numeral or symbol (or other form without letters) occurs once on each side; punctuation only with `link_punctuation: true`, because alignment guidelines such as Ugarit's never align it |
 | `names` | a proper noun on one side and a word on the other have matching consonant skeletons (transliterations from MISC `LTranslit`/`Translit`, lemma, form; Greek romanised; similarity ≥ 0.9, short skeletons equal), with no equally good rival |
 | `lexicon` | the lemma's top translation has at least `min_count` (5) links and covers at least `min_share` (95%) of **all** the lemma's occurrences, the lemma occurs once in its sentence and the translation once (unlinked) in the other |
 

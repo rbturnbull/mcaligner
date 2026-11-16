@@ -122,7 +122,7 @@ def test_run_command(files, scripted_team, tmp_path):
 
 def test_run_reports_failures_and_prices(files, monkeypatch, tmp_path):
     import mcaligner.cli as cli
-    from mcaligner.agents.team import ModelUsage
+    from mcaligner.agents.team import Details, ModelUsage
     from mcaligner.pipeline import RunReport, TaskResult
     from mcaligner.rules import RulesReport
 
@@ -135,7 +135,7 @@ def test_run_reports_failures_and_prices(files, monkeypatch, tmp_path):
         async def run(self):
             return RunReport(
                 target="pred", pairs=1, links=0, low_confidence=0, mean_confidence=0.0, rounds=[], rules=RulesReport(),
-                tasks=[TaskResult(round=1, role="aligner", sent_ids=["x"], error="boom")], total=usage, usage={"m": usage},
+                tasks=[TaskResult(round=1, role="aligner", sent_ids=["x"], error="boom", details=Details(requests=2, tools={"pair_words": 1}, retries=["why"]))], total=usage, usage={"m": usage},
             )  # fmt: skip
 
     monkeypatch.setattr(cli, "Pipeline", FakePipeline)
@@ -143,6 +143,7 @@ def test_run_reports_failures_and_prices(files, monkeypatch, tmp_path):
     result = runner.invoke(app, ["run", *specs(files), "-a", f"pred=ar,grc,{pred}", "--target", "pred"])
     assert result.exit_code == 0, result.output
     assert "1 failed tasks" in result.output and "$0.0123" in result.output
+    assert "aligner: 1 tasks, 2 requests, 1 retries; tool calls: pair_words 1" in result.output
 
 
 def test_run_errors(files, monkeypatch, tmp_path):
@@ -196,3 +197,10 @@ def test_mcp_serve(files, monkeypatch):
     assert runner.invoke(app, ["mcp", "serve", *specs(files)]).exit_code == 0
     assert runner.invoke(app, ["mcp", "serve", *specs(files), "--transport", "streamable-http", "--port", "9"]).exit_code == 0
     assert ran[0][0] == ("stdio",) and ran[1][0] == ("streamable-http",) and ran[1][1]["port"] == 9
+
+
+def test_name_list():
+    from mcaligner.cli import name_list
+
+    assert name_list(None) is None and name_list("none") == [] and name_list(" ") == []
+    assert name_list("lemma, upos,,feats") == ["lemma", "upos", "feats"]

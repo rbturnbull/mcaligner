@@ -51,7 +51,26 @@ uv run mcaligner run ... --strong-thinking low --no-scorer
 All options also live in a YAML settings file (`mcaligner settings` prints
 the defaults): tiers, per-role `model`, `thinking`, `instructions` and
 `enabled`, `threshold`, `rounds`, `batch_sentences`, `batch_words`,
-`candidates`, `misc_keys`, and the rule settings.
+`candidates`, `misc_keys`, `guidelines`, and the rule settings (including `link_punctuation`).
+
+## Columns and tools
+
+The prompt shows each word as `id form` plus the `columns` setting (default `lemma upos head deprel`; `--columns
+lemma,upos,head,deprel,feats,xpos`, or `none` for forms only), then any `misc_keys`. `tools` limits the read tools the
+agents may call (`--tools none`, or a list; default all). The instructions describe whatever is shown and available, so
+the same code runs ablations such as "no parse" or "with FEATS".
+
+## Guidelines and punctuation
+
+The aligner's and scorer's instructions include annotation guidelines, so they follow the rules the human
+annotators followed. The default is the bundled `grc-lat` (`mcaligner/guidelines/grc-lat.md`, a condensed version of
+the Ugarit guidelines for Greek-Latin fragments; articles are not aligned). `bicross` is the BICROSS guidelines of 13 August 2024
+for the New Testament manuscripts (articles are aligned with their noun's translation), which the BICROSS annotators followed. Use `--guidelines PATH` (or `guidelines:` in the settings) for your
+own text, or `--guidelines none` for other language pairs such as Arabic-Greek.
+
+Punctuation is never aligned under these guidelines, so links to punctuation are dropped in code from the aligner's
+answers and the identical rule skips it; the number dropped is in each task's `details.dropped` in the report.
+`--link-punctuation` (or `rules: {link_punctuation: true}`) allows them.
 
 ## Cost
 

@@ -15,6 +15,7 @@ from mcparser.corpus import Sentence
 from mcparser.corpus.alignment import Link
 
 from ..lexicon import TranslationTable, lemma_of
+from ..settings import COLUMNS, DEFAULT_COLUMNS, TOOL_NAMES
 
 
 @dataclass
@@ -50,22 +51,13 @@ renders, e.g. a verb with an object suffix "blessed-us" to both the verb and
 the pronoun. Leave a word unlinked when it has no counterpart (a word the
 translator added, or a function word the other language leaves out).
 
-The task gives, for each pair: both sentences (id form lemma UPOS head deprel,
-glosses where available), the settled links (by code rules or earlier work;
-they are kept), links to review, and for unlinked words how their lemma is
-linked elsewhere in the corpus. Follow that evidence unless the context rules
-it out. Tools are available (get_parallel on alignment "{target}" or other sets
-for aligned examples, translation_candidates for other lemmas with side="a" or
-"b", similar_pairs, lemma_links, link_examples, alignment_stats, analyse_form,
-find_tokens) but call them only when the evidence given is not enough, and make
-independent calls in parallel. The prompt omits XPOS and FEATS: pair_words gives
-every column of a pair's words, and category_links shows how words of a category
-(UPOS, XPOS, FEATS such as Case=Gen, deprel) are usually linked or left unlinked.
-Use them when the grammar decides a link (an article, a case against a
-preposition, tense and voice, a participle).
+The task gives, for each pair: both sentences ({columns}, glosses where
+available), the settled links (by code rules or earlier work; they are kept),
+links to review, and for unlinked words how their lemma is linked elsewhere in
+the corpus. Follow that evidence unless the context rules it out. {tools}
 
 Answer with ONE final result. In `links`, one line per link:
-"SENT_ID A-B S|P CONFIDENCE", e.g. "B10K1V1 3-5 S 0.95". List every link of
+"SENT_ID A-B S|P CONFIDENCE", e.g. "<id> 3-5 S 0.95", with <id> the pair id exactly as in its "## Pair" heading. List every link of
 each pair except the settled ones, which are kept automatically; a link to
 review that you do not list is removed. To remove a settled link that is
 wrong, put "SENT_ID A-B" in `remove`. Confidence: 0.95 or more = clear; 0.8 =
@@ -81,34 +73,87 @@ morphemes the parse did not split off (a pronoun suffix, an attached
 preposition, the person of a verb), so a link from such a word to a pronoun
 or preposition on the other side is right when that morpheme renders it.
 
-For each pair the task gives both sentences (id form lemma UPOS head deprel,
-glosses where available), all its links, and the links to score. Rate each
+For each pair the task gives both sentences ({columns}, glosses where
+available), all its links, and the links to score. Rate each
 link to score: how likely is it that these two words correspond in this
-sentence? (Tools: pair_words for XPOS and FEATS, category_links for how a kind of
-word is usually linked, similar_pairs, lemma_links, link_examples.) 0.95 or more = clearly right; 0.8 = probably right; 0.6 = doubtful;
+sentence? 0.95 or more = clearly right; 0.8 = probably right; 0.6 = doubtful;
 below 0.5 = probably wrong (e.g. the wrong one of two similar words, or a word
-that has a better counterpart). Links below {threshold} go back to the aligner.
+that has a better counterpart). Links below {threshold} go back to the aligner. {tools}
 
 Answer with ONE final result: in `scores`, one line per link to score,
-"SENT_ID A-B CONFIDENCE", e.g. "B10K1V1 3-5 0.9". Keep `summary` under 15 words.
+"SENT_ID A-B CONFIDENCE", e.g. "<id> 3-5 0.9", with <id> the pair id exactly as in its "## Pair" heading. Keep `summary` under 15 words.
 """
 
 
-def instructions(role: str, a: str, b: str, target: str, threshold: float, extra: str | None = None) -> str:
+GUIDELINES = """\
+## Alignment guidelines
+
+The human annotators of this text followed these guidelines. Apply them: they
+decide which words are linked and which are left unlinked.
+
+{guidelines}
+"""
+
+
+COLUMN_NAMES = {"upos": "UPOS", "xpos": "XPOS", "feats": "FEATS"}
+
+
+def column_text(columns: list[str] | tuple[str, ...]) -> str:
+    """``id form lemma UPOS head deprel`` for the columns shown."""
+    return " ".join(["id", "form", *(COLUMN_NAMES.get(name, name) for name in columns)])
+
+
+def tools_text(tools: set[str] | frozenset[str] | list[str] | None, columns: list[str] | tuple[str, ...]) -> str:
+    """What the instructions say about the tools the agent has (None = all of them)."""
+    names = TOOL_NAMES if tools is None else set(tools)
+    if not names:
+        return "No tools are available: answer from the task."
+    text = (
+        f"Tools are available ({', '.join(sorted(names))}) but call them only when the evidence given is not enough, "
+        "and make independent calls in parallel."
+    )
+    hidden = [COLUMN_NAMES.get(name, name) for name in COLUMNS if name not in columns]
+    if "pair_words" in names and hidden:
+        text += f" The prompt omits {', '.join(hidden)}: pair_words gives every column of a pair's words"
+        text += (
+            ", and category_links shows how words of a category (UPOS, XPOS, FEATS such as Case=Gen, deprel) are "
+            "usually linked or left unlinked. Use them when the grammar decides a link (an article, a case against a "
+            "preposition, tense and voice, a participle)."
+            if "category_links" in names
+            else "."
+        )
+    return text
+
+
+def instructions(
+    role: str,
+    a: str,
+    b: str,
+    target: str,
+    threshold: float,
+    extra: str | None = None,
+    guidelines: str | None = None,
+    columns: list[str] | tuple[str, ...] = DEFAULT_COLUMNS,
+    tools: list[str] | None = None,
+) -> str:
     template = ALIGNER if role == "aligner" else SCORER
-    text = template.format(a=a, b=b, target=target, threshold=threshold)
+    text = template.format(
+        a=a, b=b, target=target, threshold=threshold, columns=column_text(columns), tools=tools_text(tools, columns)
+    )
+    if guidelines:
+        text = f"{text}\n{GUIDELINES.format(guidelines=guidelines.strip())}"
     return f"{text}\n{extra.strip()}\n" if extra else text
 
 
-def word_lines(sentence: Sentence, misc_keys: list[str]) -> list[str]:
-    """``id form lemma UPOS head deprel [glosses]`` per word, and a line per multiword token."""
+def word_lines(sentence: Sentence, misc_keys: list[str], columns: list[str] | tuple[str, ...] = DEFAULT_COLUMNS) -> list[str]:
+    """``id form`` and the ``columns`` (default lemma UPOS head deprel), then the MISC values, per word; a line per multiword token."""
     lines = []
     for token in sentence.tokens:
         if token.is_multiword:
             lines.append(f"{token.id} {token.form} (token of words {token.id})")
         elif token.is_word:
             extra = [value for key in misc_keys if (value := token.misc_value(key))]
-            lines.append(" ".join([token.id, token.form, token.lemma, token.upos, token.head, token.deprel, *extra]))
+            lines.append(" ".join([token.id, token.form, *(getattr(token, name) for name in columns), *extra]))
     return lines
 
 
@@ -152,11 +197,12 @@ def pair_block(
     names: tuple[str, str],
     misc_keys: list[str],
     candidates: int,
+    columns: list[str] | tuple[str, ...] = DEFAULT_COLUMNS,
 ) -> str:
     """The text of one pair in a task prompt."""
     lines = [f"## Pair {item.sent_id}", f"A: {item.a.text}"]
-    lines += word_lines(item.a, misc_keys)
-    lines += [f"B: {item.b.text}", *word_lines(item.b, misc_keys)]
+    lines += word_lines(item.a, misc_keys, columns)
+    lines += [f"B: {item.b.text}", *word_lines(item.b, misc_keys, columns)]
     settled = ", ".join(link_text(link, confidence[link.key]) for link in item.settled) or "none"
     lines.append(f"Settled links: {settled}")
     if role == "aligner":
@@ -181,9 +227,11 @@ def task_prompt(
     names: tuple[str, str],
     misc_keys: list[str],
     candidates: int,
+    columns: list[str] | tuple[str, ...] = DEFAULT_COLUMNS,
 ) -> str:
     header = (
         f"Align these {len(items)} sentence pairs." if role == "aligner" else f"Score the listed links of these {len(items)} sentence pairs."
     )
-    blocks = [pair_block(item, role, confidence[item.sent_id], table, names, misc_keys, candidates) for item in items]
+    header += f' Use the pair ids exactly as in the "## Pair" headings ({", ".join(item.sent_id for item in items)}), without any prefix.'
+    blocks = [pair_block(item, role, confidence[item.sent_id], table, names, misc_keys, candidates, columns) for item in items]
     return "\n\n".join([header, *blocks])

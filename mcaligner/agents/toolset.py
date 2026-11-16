@@ -18,23 +18,10 @@ from mcparser.corpus import parse_conllu
 from pydantic_ai import ModelRetry, RunContext
 from pydantic_ai.toolsets import AbstractToolset, ToolsetTool, WrapperToolset
 
+from ..settings import TOOL_NAMES
 from .prompts import word_lines
 
-READ_TOOLS = frozenset(
-    {
-        "get_parallel",
-        "translation_candidates",
-        "analyse_form",
-        "find_tokens",
-        "get_context",
-        "similar_pairs",
-        "lemma_links",
-        "link_examples",
-        "alignment_stats",
-        "pair_words",
-        "category_links",
-    }
-)
+READ_TOOLS = TOOL_NAMES
 """Deliberately small: the task prompt already has the pairs, their links and the main evidence; the last six are mcaligner's exploration tools."""
 
 LIST_ARGUMENTS = ("alignments", "sources")
@@ -115,11 +102,17 @@ def compact(name: str, result: Any) -> Any:
 
 @dataclass
 class ReadToolset(WrapperToolset[Any]):
-    """Only :data:`READ_TOOLS`, with list arguments repaired and results compacted."""
+    """Only the ``allowed`` tools (default :data:`READ_TOOLS`), with list arguments repaired and results compacted."""
+
+    allowed: frozenset[str] | None = None
+
+    @property
+    def names(self) -> frozenset[str]:
+        return READ_TOOLS if self.allowed is None else self.allowed
 
     async def get_tools(self, ctx: RunContext[Any]) -> dict[str, ToolsetTool[Any]]:
         tools = await self.wrapped.get_tools(ctx)
-        return {name: tool for name, tool in tools.items() if name in READ_TOOLS}
+        return {name: tool for name, tool in tools.items() if name in self.names}
 
     @staticmethod
     def normalise(args: dict[str, Any]) -> dict[str, Any]:
@@ -136,10 +129,11 @@ class ReadToolset(WrapperToolset[Any]):
         return fixed
 
     async def call_tool(self, name: str, tool_args: dict[str, Any], ctx: RunContext[Any], tool: ToolsetTool[Any]) -> Any:
-        if name not in READ_TOOLS:
+        if name not in self.names:
             raise ModelRetry(f"The tool {name!r} is not available; answer with your final result instead.")
         return compact(name, await self.wrapped.call_tool(name, self.normalise(tool_args), ctx, tool))
 
 
-def read_toolset(toolset: AbstractToolset[Any]) -> ReadToolset:
-    return ReadToolset(wrapped=toolset)
+def read_toolset(toolset: AbstractToolset[Any], allowed: list[str] | None = None) -> ReadToolset:
+    """``toolset`` limited to the ``allowed`` tool names (None = all read tools, [] = none)."""
+    return ReadToolset(wrapped=toolset, allowed=None if allowed is None else frozenset(allowed))

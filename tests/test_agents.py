@@ -9,8 +9,8 @@ from pydantic_ai.models.function import FunctionModel
 from scripted import align, score, scripted
 
 from mcaligner.agents.outputs import Alignment, Applier, Scores, TaskBatch, parse_links, parse_removals, parse_scores
-from mcaligner.agents.prompts import PairItem, evidence_lines, instructions, pair_block, task_prompt, word_lines
-from mcaligner.agents.team import AlignerTeam, ModelUsage
+from mcaligner.agents.prompts import PairItem, column_text, evidence_lines, instructions, pair_block, task_prompt, tools_text, word_lines
+from mcaligner.agents.team import Details, AlignerTeam, ModelUsage
 from mcaligner.agents.toolset import ReadToolset, category_view, compact, pair_words_view, parallel_view, read_toolset, translations
 from mcaligner.lexicon import TranslationTable
 from mcaligner.settings import RoleSettings, Settings
@@ -24,6 +24,62 @@ def item(store, sent_id, settled="", review=""):
 
 
 # ------------------------------------------------------------ prompts
+
+
+def test_columns_and_tools_in_prompts(store):
+    sentence = store.source("grc").sentence("B10K1V1")
+    first = sentence.words[0]
+    assert word_lines(sentence, [], [])[0] == f"{first.id} {first.form}"
+    assert word_lines(sentence, [], ["feats", "xpos"])[0] == f"{first.id} {first.form} {first.feats} {first.xpos}"
+    assert column_text(["lemma", "upos", "feats"]) == "id form lemma UPOS FEATS" and column_text([]) == "id form"
+    assert "No tools are available" in tools_text([], [])
+    everything = tools_text(None, ["lemma", "upos", "head", "deprel"])
+    assert "category_links" in everything and "The prompt omits XPOS, FEATS" in everything
+    assert "category_links" not in tools_text(["pair_words"], []) and "pair_words gives every column of a pair's words." in tools_text(["pair_words"], [])
+    assert "omits" not in tools_text(None, ["lemma", "upos", "xpos", "feats", "head", "deprel"])
+    assert "omits" not in tools_text(["get_parallel"], [])
+    text = instructions("aligner", "ar", "grc", "pred", 0.8, columns=["lemma", "feats"], tools=[])
+    assert "(id form lemma FEATS, glosses" in text and "No tools are available" in text
+    assert "(id form lemma UPOS head deprel, glosses" in instructions("scorer", "ar", "grc", "pred", 0.8)
+
+
+@pytest.mark.anyio
+async def test_read_toolset_limits_the_tools(store):
+    full = read_toolset(MCPToolset(build_server(store)))
+    limited = read_toolset(MCPToolset(build_server(store)), ["get_parallel"])
+    none = read_toolset(MCPToolset(build_server(store)), [])
+    from pydantic_ai import RunContext
+    from pydantic_ai.models.test import TestModel
+    from pydantic_ai.usage import RunUsage
+
+    ctx = RunContext(deps=None, model=TestModel(), usage=RunUsage())
+    async with full, limited, none:
+        assert "pair_words" in await full.get_tools(ctx)
+        assert set(await limited.get_tools(ctx)) == {"get_parallel"}
+        assert await none.get_tools(ctx) == {}
+        with pytest.raises(ModelRetry, match="not available"):
+            await limited.call_tool("pair_words", {}, None, None)  # type: ignore[arg-type]
+
+
+def test_instructions_with_guidelines():
+    plain = instructions("aligner", "ar", "grc", "pred", 0.8)
+    text = instructions("scorer", "ar", "grc", "pred", 0.7, extra="Extra.", guidelines="  Never link commas. ")
+    assert "## Alignment guidelines" not in plain
+    assert "## Alignment guidelines" in text and "Never link commas." in text and text.rstrip().endswith("Extra.")
+
+
+def test_applier_drops_links_to_punctuation(store):
+    aset = store.alignment("pred")
+    comma_a = next(w.id for w in aset.source_a.sentence("B10K1V1").words if w.upos == "PUNCT")
+    word_a = next(w.id for w in aset.source_a.sentence("B10K1V1").words if w.upos != "PUNCT")
+    word_b = next(w.id for w in aset.source_b.sentence("B10K1V1").words if w.upos != "PUNCT")
+    answer = Alignment(links=f"B10K1V1 {comma_a}-{word_b} S 0.9\nB10K1V1 {word_a}-{word_b} S 0.9")
+    batch = TaskBatch("pred", ["B10K1V1"])
+    Applier(store).alignment(answer, batch)
+    assert store.get_parallel("pred", "B10K1V1").links == f"{word_a}-{word_b}S" and batch.dropped == 1
+    both = TaskBatch("pred", ["B10K1V1"])
+    Applier(store, link_punctuation=True).alignment(answer, both)
+    assert comma_a in store.get_parallel("pred", "B10K1V1").links and both.dropped == 0
 
 
 def test_instructions():
@@ -175,13 +231,26 @@ async def test_read_toolset_calls(store):
             ],
         )
         team = AlignerTeam(store, "pred", Settings(), models={"aligner": model}, toolset=toolset)
-        await team.run("aligner", "## Pair B10K1V1", TaskBatch("pred", ["B10K1V1"]))
+        details = Details()
+        await team.run("aligner", "## Pair B10K1V1", TaskBatch("pred", ["B10K1V1"]), details)
+        assert details.tools == {"translation_candidates": 1, "get_parallel": 1} and details.requests == 2 and details.retries == []
         assert model.returns[0].startswith("رَسُول (side a)") and model.returns[1].startswith("Pair B10K1V2 (silver)")
         with pytest.raises(ModelRetry, match="not available"):
             await toolset.call_tool("set_links", {}, None, None)  # type: ignore[arg-type]
 
 
 # ------------------------------------------------------------ team
+
+
+@pytest.mark.anyio
+async def test_team_details_record_retries(store):
+    model = scripted(lambda prompt: {"links": "B10K1V1 1-1 S 0.9" if model.retries else "not a link"})
+    team = AlignerTeam(store, "pred", Settings(), models={"aligner": model}, toolset=read_toolset(MCPToolset(build_server(store))))
+    details = Details()
+    async with team:
+        await team.run("aligner", "## Pair B10K1V1", TaskBatch("pred", ["B10K1V1"]), details)
+    assert details.requests == 2 and len(details.retries) == 1 and details.tools == {}
+    assert store.get_parallel("pred", "B10K1V1").links == "1-1S"
 
 
 @pytest.mark.anyio

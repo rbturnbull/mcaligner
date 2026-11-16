@@ -31,7 +31,9 @@ def test_identical(tmp_path):
     )
     rules = Rules(store, "pred", RuleSettings(rules=["identical"]))
     found = {(p.source, p.target) for p in rules.propose("s")}
-    assert found == {("2", "3"), ("3", "2")}  # ',' is not unique in A; 'x' has letters and is not a symbol
+    assert found == {("3", "2")}  # punctuation is not linked; 'x' has letters and is not a symbol
+    punctuation = Rules(store, "pred", RuleSettings(rules=["identical"], link_punctuation=True))
+    assert {(p.source, p.target) for p in punctuation.propose("s")} == {("2", "3"), ("3", "2")}  # ',' is not unique in A
 
 
 def test_names(tmp_path):

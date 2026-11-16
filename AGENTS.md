@@ -32,6 +32,7 @@ not imported.
 mcaligner/
   evaluate.py    # P/R/F1 over sure and over all links, AER; per pair + micro total
   lexicon.py     # TranslationTable (lemma -> linked lemmas, one pass, leave-one-pair-out) + lexicon export
+  guidelines/    # bundled annotation guidelines (grc-lat.md, bicross.md), added to the agents' instructions (setting `guidelines`, default grc-lat)
   rules.py       # code-only links: identical symbols, transliterated names, dominant lexicon match; measure()
   settings.py    # Settings (YAML): tiers, per-role model/thinking/instructions/enabled, batching, rules
   agents/
@@ -113,6 +114,86 @@ overlapping word), so it survives tokenisation differences. `init` only detaches
 full stop of `rep.` (3 fragments: grc 64, lat 26, lat 64; 1593 -> 1597 links). Work files are in `data/grc-lat/`.
 Do not let a parser change the segmentation after the gold is mapped.
 
+### Greek-Latin DFHG dev set (20 fragments; `data/grc-lat/`)
+
+Dev ids in `dev-ids.txt` (stratified by length, seed 42; `scripts/grc_lat_split.py`); gold-dev 313 links.
+Parses: grc $17.74, lat $16.83 (cheap-first, syntax on Opus, 3 rounds; the PROIEL treebanks as examples).
+Cold start (no evidence sets), 2 rounds, Opus aligner + Sonnet scorer, evaluated against gold-dev:
+
+| Run | Cost | Requests | All P/R/F1 | AER |
+|---|---|---|---|---|
+| 1 (old prompt) | $0.84 | 34 | 0.889/0.869/0.879 | 0.088 |
+| 2 (old prompt; run-to-run noise) | $0.58 | 36 | 0.886/0.866/0.876 | 0.089 |
+| 3 (ids fixed, see below) | $0.60 | 23 | 0.895/0.869/0.882 | 0.083 |
+| 3 without its 15 punctuation links (post-hoc) | – | – | 0.941/0.869/0.904 | 0.058 |
+| 4 (+ guidelines in the prompts, punctuation dropped in code) | $0.77 | 22 | 0.955/0.885/0.919 | 0.044 |
+
+- The prompt's answer example used an Ephesians id (`B10K1V1`), so models wrote `B98` for pair `98` and were
+  retried (15 of 36 requests). The examples are now `<id>` and the task header lists the ids: 1 retry in run 3.
+- `TaskResult.details` (requests, tool calls by name, retry messages) is in the report. Almost no tool calls were
+  made (1 `pair_words` in run 3, none in the others): the prompt evidence is enough.
+- Error analysis (pairs 80, 43, 60, 96, 84): (1) the aligner links punctuation (`,`~`,`, `«`~`«`), which the guidelines
+  forbid; (2) links the guidelines rule out (`τούτου`~`Sabinorum`, `τῇ`~`libro`, an article to `filius`); (3) misses
+  particle groups (`ἔτι δὲ καὶ`~`nec non`) and crossed pairs (`τότε πρῶτον`~`tunc demum`); (4) the names rule's wrong
+  `Ἡφαίστου`~`festi` (0.95) where `Vulcani` is right. Done in run 4: `mcaligner/guidelines/grc-lat.md` (a condensed version, from `../guidelines/grc-lat.md`) is in the
+  aligner's and scorer's instructions by default (`guidelines`), and links to punctuation are dropped in code
+  (`rules.link_punctuation`); the model made 0 such links with the guidelines. Human-human on the DFHG gold:
+  Dice 0.927 (from the README's flattened counts 1487/1486, 1378 agreed); BICROSS NT annotators: 0.948.
+  The dev set was used to choose these changes, so confirm on the 80 test fragments before quoting a number.
+
+**Column ablation** (same 20 dev pairs; guidelines, punctuation filter, rules, models and `--tools none` fixed; only
+`--columns` varies; one run each; `data/grc-lat/ablation/`; F1 over all links, 95% bootstrap over the 20 pairs):
+
+| Columns shown | Cost | F1 | AER |
+|---|---|---|---|
+| forms only (no parse) | $0.40 | 0.912 [0.881, 0.944] | 0.053 |
+| lemma upos | $0.48 | 0.916 | 0.047 |
+| lemma upos head deprel (default) | $0.54 | 0.907 | 0.052 |
+| + feats | $0.73 | 0.913 | 0.045 |
+| + feats xpos | $0.71 | 0.916 | 0.047 |
+| default columns with all tools (run 4) | $0.77 | 0.919 | 0.044 |
+
+No difference is detectable: every paired difference is within about ±0.02 F1 (e.g. forms vs default +0.005 [-0.016, +0.025]),
+which is the resolution of 20 pairs / 313 links. So on DFHG Greek-Latin the agents do not need the parse in the
+prompt, and FEATS only adds cost (+35%). Caveats: the rules (names rule: 43 links) still use the parse; cold start,
+so the lemma-based prompt evidence was empty; Opus knows classical Greek and Latin well. The same test on the BICROSS
+manuscript text (variant spellings, nomina sacra) and with accumulated evidence is still to do.
+
+**Column ablation on BICROSS** (20 verses chosen like the DFHG dev set, `scripts/grc_lat_split.py`; ids in
+`data/bicross/dev-ids.txt`, the other 79 verses are the untouched test set; consensus-dev = 322 links; same settings):
+
+| Columns shown | Cost | F1 vs consensus | AER |
+|---|---|---|---|
+| forms only | $0.29 | 0.905 | 0.084 |
+| lemma upos | $0.31 | 0.903 | 0.081 |
+| lemma upos head deprel | $0.37 | 0.904 | 0.079 |
+| + feats | $0.55 | 0.902 | 0.084 |
+| + feats xpos | $0.59 | 0.903 | 0.084 |
+
+Again no difference (paired differences within ±0.01). The two annotators agree at F1 0.955 on these 20 verses. The
+whole gap is one word class: the model misses 46 of the 53 consensus links that start at a Greek article
+(`το~aqua`, `το~spiritus`) and almost nothing else (precision 0.98, recall 0.84). The BICROSS annotators link the
+article to its noun's translation (88-95% of articles, mostly to NOUN), whereas DFHG's gold leaves ~90% of articles
+unlinked, which is what the bundled `grc-lat` guidelines say. Guidelines are therefore per corpus: BICROSS needs its
+own article rule (to be tested; the dev set was used to find this).
+
+**BICROSS guidelines** (`--guidelines bicross`, `mcaligner/guidelines/bicross.md` from `Adam/.../BICROSS_guidelines_grc-lat.odt`,
+13 Aug 2024; the v2 .odt of 28 May says the opposite about articles and predates both workbooks). Same 20 dev verses, no tools:
+
+| Run | Cost | F1 vs consensus | vs Kreinecker | vs Tilke | AER (consensus) |
+|---|---|---|---|---|---|
+| `grc-lat` guidelines, forms only | $0.29 | 0.905 | 0.893 | 0.895 | 0.084 |
+| `bicross` guidelines, forms only | $0.40 | 0.978 | 0.957 | 0.967 | 0.016 |
+| `bicross` guidelines, lemma upos head deprel | $0.54 | 0.977 | 0.955 | 0.965 | 0.018 |
+
+The annotators agree with each other at F1 0.955 on these verses, so the aligner is at the level of the human agreement
+(against each annotator separately). The consensus (links of either annotator) is a lenient reference; compare with the
+per-annotator figures. The guidelines were chosen after seeing the article gap on this dev set: confirm on the 79 test verses.
+- Rules on the dev set: names 43 links (41 in gold); `identical` linked punctuation only (0 right): now off
+  (`link_punctuation`); lexicon with the full gold as leave-one-out evidence adds 3 (all right).
+- BICROSS (`data/bicross/`): Greek and Latin manuscript text parsed the same way (resumable `parse-*.sh`); two
+  annotators' alignments, IRR AER 0.052 (`scripts/bicross_prepare.py`, `irr.json`).
+
 ## Rules (no model)
 
 `rules.py`; `mcaligner rules -s ... -a ... --target pred` applies them,
@@ -121,6 +202,8 @@ no link yet, only 1-1, only when the match is unique in the pair, and write
 sure links with confidence 0.95 (identical: 0.98), agent `rules`.
 
 - **identical**: same form on both sides, unique on each side, and a symbol
+  (punctuation only with `link_punctuation`, off by default: the Greek-Latin DFHG
+  gold never aligns it, and the first measure linked 7 punctuation marks, 0 right)
   (UPOS PUNCT/NUM/SYM or no letters).
 - **names**: one side PROPN, neither side a function word; consonant
   skeletons (romanise: NFD, strip marks, Greek → Latin; then drop vowels and

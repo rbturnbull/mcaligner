@@ -44,6 +44,13 @@ AlignmentOption = Annotated[
 ]
 
 
+def name_list(value: str | None) -> list[str] | None:
+    """``"a,b"`` -> ``["a", "b"]``; ``"none"`` or an empty string -> ``[]``; None stays None."""
+    if value is None:
+        return None
+    return [] if value.strip() in ("", "none") else [name.strip() for name in value.split(",") if name.strip()]
+
+
 def fail(error: Exception) -> typer.Exit:
     typer.echo(f"Error: {error}", err=True)
     return typer.Exit(1)
@@ -176,6 +183,16 @@ def print_report(report: RunReport) -> None:
     failed = [task for task in report.tasks if task.error]
     if failed:
         typer.echo(f"{len(failed)} failed tasks (see the report).")
+    for role in ("aligner", "scorer"):
+        tasks = [task for task in report.tasks if task.role == role]
+        if tasks:
+            tools: dict[str, int] = {}
+            for task in tasks:
+                for name, count in task.details.tools.items():
+                    tools[name] = tools.get(name, 0) + count
+            called = ", ".join(f"{name} {count}" for name, count in sorted(tools.items())) or "none"
+            retries = sum(len(task.details.retries) for task in tasks)
+            typer.echo(f"{role}: {len(tasks)} tasks, {sum(task.details.requests for task in tasks)} requests, {retries} retries; tool calls: {called}")
     typer.echo(
         f"{report.pairs} pairs, {report.links} links, mean confidence {report.mean_confidence}, "
         f"{report.low_confidence} below threshold."
@@ -211,6 +228,18 @@ def run(
     strong_thinking: Annotated[str | None, typer.Option(help="Reasoning effort for the strong tier: off, on, minimal..xhigh.")] = None,
     efficient_thinking: Annotated[str | None, typer.Option(help="Reasoning effort for the efficient tier.")] = None,
     scorer: Annotated[bool | None, typer.Option("--scorer/--no-scorer", help="Run the scorer (default from settings: on).")] = None,
+    guidelines: Annotated[
+        str | None, typer.Option(help="Annotation guidelines for the agents: a bundled name (grc-lat, the default), a file path, or none.")
+    ] = None,
+    columns: Annotated[
+        str | None, typer.Option(help="Columns shown for each word after id and form, e.g. lemma,upos,head,deprel,feats; none = forms only.")
+    ] = None,
+    tools: Annotated[
+        str | None, typer.Option(help="Read tools the agents may call: all, none, or a comma-separated list.")
+    ] = None,
+    link_punctuation: Annotated[
+        bool | None, typer.Option("--link-punctuation/--no-link-punctuation", help="Allow links to punctuation (default: dropped in code).")
+    ] = None,
     report_path: Annotated[Path | None, typer.Option("--report", help="Write the run report (JSON) here.")] = None,
 ) -> None:
     """Align with rules, then aligner/scorer agents; prints tokens and estimated cost."""
@@ -221,6 +250,8 @@ def run(
             rounds=rounds, concurrency=concurrency, batch_sentences=batch_sentences, threshold=threshold,
             strong_model=strong_model, efficient_model=efficient_model, light_model=light_model,
             strong_thinking=thinking_option(strong_thinking), efficient_thinking=thinking_option(efficient_thinking),
+            guidelines=guidelines, link_punctuation=link_punctuation,
+            columns=name_list(columns), tools=None if tools in (None, "all") else name_list(tools),
         )  # fmt: skip
     except ValidationError as error:
         raise fail(error) from None
