@@ -51,7 +51,7 @@ def test_mcp_config(converted):
          "-a", f"silver=ar,grc,{converted.alignment}:ro"],
     )  # fmt: skip
     assert result.exit_code == 0, result.output
-    args = json.loads(result.output)["mcpServers"]["conllu"]["args"]
+    args = json.loads(result.output)["mcpServers"]["mcaligner"]["args"]
     assert "--alignment" in args
 
 
@@ -211,3 +211,18 @@ def test_settings_command(tmp_path):
     path.write_text("rounds: 5\n", encoding="utf-8")
     assert "rounds: 5" in runner.invoke(app, ["settings", "--settings", str(path)]).output
     assert runner.invoke(app, ["settings", "--settings", str(tmp_path / "missing.yaml")]).exit_code == 1
+
+
+def test_mcp_config_runs_mcaligner(converted):
+    result = runner.invoke(app, ["mcp", "config", *specs(converted)])
+    assert result.exit_code == 0, result.output
+    entry = json.loads(result.output)["mcpServers"]["mcaligner"]
+    assert entry["args"][:4] == ["-m", "mcaligner", "mcp", "serve"]
+
+
+def test_mcp_serve(converted, monkeypatch):
+    ran = []
+    monkeypatch.setattr("mcp.server.MCPServer.run", lambda self, *args, **kwargs: ran.append((args, kwargs)))
+    assert runner.invoke(app, ["mcp", "serve", *specs(converted)]).exit_code == 0
+    assert runner.invoke(app, ["mcp", "serve", *specs(converted), "--transport", "streamable-http", "--port", "9"]).exit_code == 0
+    assert ran[0][0] == ("stdio",) and ran[1][0] == ("streamable-http",) and ran[1][1]["port"] == 9

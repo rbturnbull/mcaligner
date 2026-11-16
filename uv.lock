@@ -9,6 +9,9 @@ resolution-markers = [
     "python_full_version < '3.11.5'",
 ]
 
+[options]
+prerelease-mode = "allow"
+
 [[package]]
 name = "accessible-pygments"
 version = "0.0.5"
@@ -1277,7 +1280,7 @@ docs = [
 
 [package.metadata]
 requires-dist = [
-    { name = "mcparser", editable = "../llmparser" },
+    { name = "mcparser", specifier = ">=0.2.0a1" },
     { name = "pydantic-ai-slim", extras = ["anthropic", "mcp"], specifier = ">=2.56.0" },
     { name = "pyyaml", specifier = ">=6.0" },
     { name = "typer", specifier = ">=0.15" },
@@ -1334,34 +1337,19 @@ wheels = [
 
 [[package]]
 name = "mcparser"
-version = "0.2.0"
-source = { editable = "../llmparser" }
+version = "0.2.0a1"
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
+    { name = "genai-prices" },
     { name = "mcp" },
     { name = "pydantic" },
     { name = "pydantic-ai-slim", extra = ["anthropic", "mcp"] },
     { name = "pyyaml" },
     { name = "typer" },
 ]
-
-[package.metadata]
-requires-dist = [
-    { name = "mcp", specifier = ">=2.3" },
-    { name = "pydantic", specifier = ">=2.10" },
-    { name = "pydantic-ai-slim", extras = ["anthropic", "mcp"], specifier = ">=2.56.0" },
-    { name = "pyyaml", specifier = ">=6.0" },
-    { name = "typer", specifier = ">=0.15" },
-]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "pytest", specifier = ">=8" },
-    { name = "pytest-cov", specifier = ">=5" },
-]
-docs = [
-    { name = "furo", specifier = ">=2024.8.6" },
-    { name = "myst-parser", specifier = ">=4" },
-    { name = "sphinx", specifier = ">=8" },
+sdist = { url = "https://files.pythonhosted.org/packages/2e/fa/57c16a194550d008cc2a0599f45b103ab5997070d8e8d84d7d3383453a06/mcparser-0.2.0a1.tar.gz", hash = "sha256:da603706fe6f6602e77c6d1caa84681b3f58b437e05cfd672a77efe8e128f035", size = 620315, upload-time = "2026-11-13T06:03:46.099Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b8/84/75e79aa168580f068b96f782fad91251a6b93eef22d814b82963169f8464/mcparser-0.2.0a1-py3-none-any.whl", hash = "sha256:e700f75925464205ea318a87b533a0b744a641f9045e3efbb169c77b43e8415b", size = 121538, upload-time = "2026-11-13T06:03:43.811Z" },
 ]
 
 [[package]]

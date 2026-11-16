@@ -40,6 +40,7 @@ mcaligner/
     outputs.py   # Alignment/Scores answers (lines), parsing, Applier (dry-run set_links, then apply)
     toolset.py   # ReadToolset: 5 read MCP tools, JSON-string list args repaired, compact results
     team.py      # AlignerTeam: one pydantic-ai Agent per role over MCPToolset(build_server(store)); usage/cost
+  mcp/           # tools.py (similar_pairs, lemma_links, link_examples, alignment_stats), server.py (MCParser's server + these), cli.py (mcp serve/config)
   pipeline.py    # rules -> align -> score -> rules rounds, batching, concurrency, RunReport
   cli.py         # typer app: convert, evaluate, lexicon, rules, run, settings, mcp (MCParser's mcp_app)
 docs/            # Sphinx (myst-parser + furo); CLI page rendered from --help in conf.py
@@ -67,12 +68,13 @@ tests/           # pytest; tests/data/sample.yaml = verses B10K1V1-3 of results/
 ## Design decisions (and why)
 
 - **Package**: uv + hatchling; MCParser (package and CLI `mcparser`, formerly
-  mcparser) by path from its repository `../llmparser`
-  (`[tool.uv.sources] mcparser = { path = "../llmparser", editable = true }`).
-- **`mcp serve` / `mcp config`** are MCParser's own typer sub-app
-  (`mcparser.cli.mcp_app`) mounted under `mcaligner mcp`: same options
-  (`--source`, `--alignment`, `--read-only`), and the Claude Desktop config
-  runs `python -m mcparser mcp serve`, which is installed in this venv.
+  llmparser) from PyPI (`mcparser>=0.2.0a1`, a pre-release, hence
+  `[tool.uv] prerelease = "allow"`). To develop against the local repository
+  `../llmparser` add `[tool.uv.sources] mcparser = { path = "../llmparser", editable = true }`.
+- **`mcp serve` / `mcp config`** are `mcaligner/mcp/cli.py`: MCParser's options
+  (reusing its typer option types) over `mcaligner.mcp.build_server`, which
+  is MCParser's server plus the exploration tools; the Claude Desktop config
+  runs `python -m mcaligner mcp serve`.
 - **`convert`** writes JSONL directly (no store, no history sidecar): it is an
   import, not an edit. Links carry no confidence, so a read-only set gives them
   its default (1.0, or e.g. `:ro:0.8` in the alignment spec).
@@ -243,8 +245,8 @@ tools can see the answer. 2 rounds, batch 5. Evaluated against silver
 - `uv run pytest` must stay at **100% line+branch coverage**
   (`--cov-fail-under=100`) and fast. No network: `conftest.py` sets
   `pydantic_ai.models.ALLOW_MODEL_REQUESTS = False`.
-- New store/MCP functionality goes into MCParser (generic, tested at 100%),
-  not here.
+- Generic store/MCP functionality goes into MCParser (tested at 100%); alignment
+  exploration tools specific to this project live in `mcaligner/mcp/`.
 - Raise `CorpusError` subclasses for expected failures; the CLI turns them
   (and `OSError`, pydantic `ValidationError`, pydantic-ai `UserError`) into
   `Error: ...` with exit status 1.

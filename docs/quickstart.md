@@ -2,7 +2,7 @@
 
 ## Install
 
-mcaligner depends on MCParser by path (the sibling directory `../llmparser`):
+mcaligner depends on MCParser from PyPI (the 0.2.0a1 pre-release):
 
 ```bash
 uv sync --python /opt/homebrew/opt/python@3.13/bin/python3.13

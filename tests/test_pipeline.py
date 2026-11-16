@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 from mcparser.corpus import NotFoundError, ReadOnlyError
-from mcparser.mcp import build_server
+from mcaligner.mcp import build_server
 from pydantic_ai.exceptions import UserError
 from pydantic_ai.mcp import MCPToolset
 from scripted import align, pairs, score, scripted

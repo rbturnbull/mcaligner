@@ -3,8 +3,7 @@ LLM Aligner
 =========================
 
 Word alignment of parallel texts (e.g. a translation and its source) with LLM
-agents, built on MCParser's corpus store and MCP server (sibling repository
-``../llmparser``).
+agents, built on MCParser's corpus store and MCP server (``mcparser`` on PyPI).
 
 Sentences are paired by ``sent_id``; word links are written Ugarit style
 (``3-5S`` sure, ``12-18P`` probable). Code rules link the near-certain words,

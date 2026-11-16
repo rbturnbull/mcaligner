@@ -20,8 +20,20 @@ from pydantic_ai.toolsets import AbstractToolset, ToolsetTool, WrapperToolset
 
 from .prompts import word_lines
 
-READ_TOOLS = frozenset({"get_parallel", "translation_candidates", "analyse_form", "find_tokens", "get_context"})
-"""Deliberately small: the task prompt already has the pairs, their links and the main evidence."""
+READ_TOOLS = frozenset(
+    {
+        "get_parallel",
+        "translation_candidates",
+        "analyse_form",
+        "find_tokens",
+        "get_context",
+        "similar_pairs",
+        "lemma_links",
+        "link_examples",
+        "alignment_stats",
+    }
+)
+"""Deliberately small: the task prompt already has the pairs, their links and the main evidence; the last four are mcaligner's exploration tools."""
 
 LIST_ARGUMENTS = ("alignments", "sources")
 """List arguments that models sometimes send as a JSON string."""

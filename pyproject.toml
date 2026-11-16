@@ -7,7 +7,7 @@ license = { text = "Apache-2.0" }
 readme = "README.rst"
 requires-python = ">=3.11"
 dependencies = [
-    "mcparser",
+    "mcparser>=0.2.0a1",
     "pydantic-ai-slim[anthropic,mcp]>=2.56.0",
     "typer>=0.15",
     "pyyaml>=6.0",
@@ -23,8 +23,8 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 packages = ["mcaligner"]
 
-[tool.uv.sources]
-mcparser = { path = "../llmparser", editable = true }
+[tool.uv]
+prerelease = "allow"
 
 [dependency-groups]
 dev = [

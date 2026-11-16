@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 from mcparser.corpus.alignment import Link, parse_ugarit
-from mcparser.mcp import build_server
+from mcaligner.mcp import build_server
 from pydantic_ai import ModelRetry
 from pydantic_ai.mcp import MCPToolset
 from pydantic_ai.models.function import FunctionModel

@@ -6,7 +6,6 @@ from collections.abc import Mapping
 from typing import Any
 
 from mcparser.corpus import CorpusStore
-from mcparser.mcp import build_server
 from mcparser.pricing import estimate
 from pydantic import BaseModel, Field
 from pydantic_ai import Agent, RunContext
@@ -16,6 +15,7 @@ from pydantic_ai.settings import ModelSettings
 from pydantic_ai.toolsets import AbstractToolset
 from pydantic_ai.usage import RunUsage, UsageLimits
 
+from ..mcp import build_server
 from ..settings import Settings
 from .outputs import Alignment, Applier, Scores, TaskBatch
 from .prompts import instructions

@@ -10,7 +10,6 @@ from typing import Annotated
 import anyio
 import typer
 import yaml
-from mcparser.cli import mcp_app
 from mcparser.corpus import CorpusError, CorpusStore
 from mcparser.mcp import AlignmentSpec, SourceSpec, load_store
 from pydantic import ValidationError
@@ -19,6 +18,7 @@ from pydantic_ai.exceptions import UserError
 from .convert import convert as convert_yaml
 from .evaluate import evaluate as evaluate_links
 from .evaluate import format_report, read_links
+from .mcp.cli import mcp_app
 from .lexicon import TranslationTable, build_lexicon
 from .agents.team import AlignerTeam
 from .pipeline import Pipeline, RunReport
@@ -28,7 +28,7 @@ from .settings import Settings, parse_thinking
 os.environ.setdefault("PYDANTIC_AI_NO_BANNER", "1")
 
 app = typer.Typer(help="LLM agents for word alignment of parallel texts.", no_args_is_help=True)
-app.add_typer(mcp_app, name="mcp", help="MCParser's MCP server over the corpora and alignment sets.")
+app.add_typer(mcp_app, name="mcp", help="MCP server over the corpora and alignment sets, with alignment exploration tools.")
 
 
 SourceOption = Annotated[
