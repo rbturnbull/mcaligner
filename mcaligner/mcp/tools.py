@@ -14,7 +14,7 @@ from __future__ import annotations
 from collections import Counter
 from typing import Any, Iterator, Literal
 
-from mcparser.corpus import CorpusStore, NotFoundError, Sentence
+from mcparser.corpus import CorpusStore, NotFoundError, Sentence, Token
 from mcparser.corpus.alignment import AlignmentSet, Link
 
 from ..lexicon import lemma_of
@@ -165,6 +165,102 @@ def _crossings(links: list[Link]) -> int:
     """Pairs of links that cross (their order differs on the two sides)."""
     edges = sorted({(int(l.source), int(l.target)) for l in links if l.source.isdigit() and l.target.isdigit()})
     return sum(1 for i, (a1, b1) in enumerate(edges) for a2, b2 in edges[i + 1 :] if a1 < a2 and b1 > b2)
+
+
+def word_row(word: Token, linked: list[str]) -> dict[str, Any]:
+    return {
+        "id": word.id,
+        "form": word.form,
+        "lemma": word.lemma,
+        "upos": word.upos,
+        "xpos": word.xpos,
+        "feats": word.feats,
+        "head": word.head,
+        "deprel": word.deprel,
+        "linked": linked,
+    }
+
+
+def pair_words(store: CorpusStore, alignment: str, sent_id: str, side: Side | None = None) -> dict[str, Any]:
+    """Every column of the words of a pair (lemma, UPOS, XPOS, FEATS, head, deprel) with the ids they are linked to.
+
+    ``side`` limits it to source A or B (default both).
+    """
+    aset = store.alignment(alignment)
+    links = aset.links(sent_id)
+    result: dict[str, Any] = {"alignment": alignment, "sent_id": sent_id}
+    for name, source, mine in (("a", aset.source_a, "source"), ("b", aset.source_b, "target")):
+        if side in (None, name):
+            theirs = "target" if mine == "source" else "source"
+            result[name] = {
+                "source": source.name,
+                "words": [
+                    word_row(word, [getattr(l, theirs) for l in links if getattr(l, mine) == word.id])
+                    for word in source.sentence(sent_id).words
+                ],
+            }
+    return result
+
+
+def feats_match(word: Token, wanted: dict[str, str]) -> bool:
+    have = word.feats_dict
+    return all(key in have and value in (have[key] or "").split(",") for key, value in wanted.items())
+
+
+def category_links(
+    store: CorpusStore,
+    alignment: str,
+    side: Side = "a",
+    upos: str | None = None,
+    xpos: str | None = None,
+    feats: str | None = None,
+    deprel: str | None = None,
+    limit: int = 10,
+    min_confidence: float = 0.0,
+    exclude_sentence: str | None = None,
+) -> dict[str, Any]:
+    """How words of a category are linked: their partners' UPOS, XPOS and lemmas, and how often they have none.
+
+    A word is in the category if it has the given ``upos``, ``xpos`` and ``deprel`` and all the ``feats``
+    (``"Case=Gen|Number=Sing"``; a value matches if it is one of a comma-separated list). At least one filter is needed.
+    """
+    wanted = {key: value for key, _, value in (item.partition("=") for item in (feats or "").split("|") if item)}
+    if not (upos or xpos or deprel or wanted):
+        raise NotFoundError("Give at least one of upos, xpos, deprel or feats.")
+    aset = store.alignment(alignment)
+    exclude = _split(exclude_sentence)
+    counts = {"upos": Counter(), "xpos": Counter(), "lemma": Counter()}
+    occurrences, unlinked, examples = 0, 0, []
+    for sent_id, a, b, links in _pairs(aset, exclude):
+        here, there = (a, b) if side == "a" else (b, a)
+        other = {w.id: w for w in there.words}
+        linked: dict[str, list[str]] = {}
+        for link in links:
+            if aset.confidence(link) >= min_confidence:
+                mine, theirs = (link.source, link.target) if side == "a" else (link.target, link.source)
+                linked.setdefault(mine, []).append(theirs)
+        for word in here.words:
+            if (upos and word.upos != upos) or (xpos and word.xpos != xpos) or (deprel and word.deprel != deprel):
+                continue
+            if not feats_match(word, wanted):
+                continue
+            occurrences += 1
+            partners = [other[i] for i in linked.get(word.id, []) if i in other]
+            unlinked += not partners
+            for partner in partners:
+                counts["upos"][partner.upos] += 1
+                counts["xpos"][partner.xpos] += 1
+                counts["lemma"][lemma_of(partner)] += 1
+            if len(examples) < 5:
+                examples.append(f"{sent_id} {word.form} -> " + (", ".join(p.form for p in partners) or "nothing"))
+    return {
+        "side": side,
+        "filter": {"upos": upos, "xpos": xpos, "feats": feats, "deprel": deprel},
+        "occurrences": occurrences,
+        "unlinked": unlinked,
+        **{f"partner_{key}": [{"value": v, "count": n} for v, n in counter.most_common(limit)] for key, counter in counts.items()},
+        "examples": examples,
+    }
 
 
 def alignment_stats(

@@ -11,7 +11,7 @@ from scripted import align, score, scripted
 from mcaligner.agents.outputs import Alignment, Applier, Scores, TaskBatch, parse_links, parse_removals, parse_scores
 from mcaligner.agents.prompts import PairItem, evidence_lines, instructions, pair_block, task_prompt, word_lines
 from mcaligner.agents.team import AlignerTeam, ModelUsage
-from mcaligner.agents.toolset import ReadToolset, compact, parallel_view, read_toolset, translations
+from mcaligner.agents.toolset import ReadToolset, category_view, compact, pair_words_view, parallel_view, read_toolset, translations
 from mcaligner.lexicon import TranslationTable
 from mcaligner.settings import RoleSettings, Settings
 
@@ -142,6 +142,18 @@ def test_compact_renderings(store):
     assert compact("get_parallel", {"bad": 1}) == {"bad": 1}
     assert compact("analyse_form", store.analyse_form("رسول").model_dump()).startswith("1 matches")
     assert compact("unknown_tool", [1]) == [1]
+
+
+def test_pair_words_and_category_views(store):
+    from mcaligner.mcp import tools
+
+    sent_id = next(iter(store.alignment("silver").pairs))
+    view = pair_words_view(tools.pair_words(store, "silver", sent_id))
+    assert view.startswith(f"Pair {sent_id} (silver): id form lemma UPOS XPOS FEATS head deprel") and "\nA (ar):" in view and "\nB (grc):" in view
+    assert " -> " in view and compact("pair_words", tools.pair_words(store, "silver", sent_id, "b")).count("(grc)") == 1
+    text = category_view(tools.category_links(store, "silver", "b", upos="NOUN"))
+    assert text.startswith("Words of side b with upos=NOUN:") and "Linked to lemma:" in text and "Examples:" in text
+    assert "Examples" not in category_view(tools.category_links(store, "silver", "b", upos="NO-SUCH-TAG"))
 
 
 def test_read_toolset_normalise():

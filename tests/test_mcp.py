@@ -93,6 +93,37 @@ def test_alignment_stats(store):
     assert tools.alignment_stats(store, "silver", threshold=1.1)["below_threshold"] == whole["links"]
 
 
+def test_pair_words(store):
+    sent_id = first_ids(store)[0]
+    both = tools.pair_words(store, "silver", sent_id)
+    assert set(both) == {"alignment", "sent_id", "a", "b"} and both["a"]["source"] == "ar" and both["b"]["source"] == "grc"
+    row = both["b"]["words"][0]
+    assert set(row) == {"id", "form", "lemma", "upos", "xpos", "feats", "head", "deprel", "linked"}
+    assert any(w["linked"] for w in both["a"]["words"]) and any(w["linked"] for w in both["b"]["words"])
+    only = tools.pair_words(store, "silver", sent_id, "a")
+    assert "b" not in only and "a" in only
+    assert all(not w["linked"] for w in tools.pair_words(store, "pred", sent_id)["a"]["words"])
+
+
+def test_category_links(store):
+    result = tools.category_links(store, "silver", "b", upos="NOUN")
+    assert result["occurrences"] > 0 and result["partner_upos"] and result["partner_lemma"] and result["examples"]
+    assert result["filter"]["upos"] == "NOUN" and result["unlinked"] >= 0
+    feats = next(w.feats for s in store.alignment("silver").source_b.sentences for w in s.words if "Case=" in w.feats)
+    case = feats.split("|")[0]
+    by_case = tools.category_links(store, "silver", "b", feats=case, limit=2)
+    assert by_case["occurrences"] > 0 and len(by_case["partner_upos"]) <= 2
+    assert tools.category_links(store, "silver", "a", feats="Case=Nonexistent")["occurrences"] == 0
+    assert tools.category_links(store, "silver", "b", upos="NOUN", xpos="zzz")["occurrences"] == 0
+    assert tools.category_links(store, "silver", "b", deprel="zzz")["occurrences"] == 0
+    weak = tools.category_links(store, "silver", "b", upos="NOUN", min_confidence=1.1)
+    assert weak["occurrences"] == result["occurrences"] and weak["unlinked"] == weak["occurrences"] and weak["partner_upos"] == []
+    left_out = tools.category_links(store, "silver", "b", upos="NOUN", exclude_sentence=first_ids(store)[0])
+    assert left_out["occurrences"] < result["occurrences"]
+    with pytest.raises(NotFoundError, match="at least one"):
+        tools.category_links(store, "silver", "b")
+
+
 def test_crossings():
     from mcparser.corpus.alignment import Link
 
@@ -120,6 +151,8 @@ async def test_server_exposes_tools(store):
             "similar_pairs": {"alignment": "silver", "sent_id": sent_id},
             "lemma_links": {"alignment": "silver", "lemma": lemma[1]},
             "link_examples": {"alignment": "silver", "lemma_a": lemma[1], "lemma_b": lemma[2]},
+            "pair_words": {"alignment": "silver", "sent_id": sent_id},
+            "category_links": {"alignment": "silver", "side": "b", "upos": "NOUN"},
         }
         for name, arguments in calls.items():
             assert not (await client.call_tool(name, arguments)).is_error

@@ -56,8 +56,13 @@ they are kept), links to review, and for unlinked words how their lemma is
 linked elsewhere in the corpus. Follow that evidence unless the context rules
 it out. Tools are available (get_parallel on alignment "{target}" or other sets
 for aligned examples, translation_candidates for other lemmas with side="a" or
-"b", analyse_form, find_tokens) but call them only when the evidence given is
-not enough, and make independent calls in parallel.
+"b", similar_pairs, lemma_links, link_examples, alignment_stats, analyse_form,
+find_tokens) but call them only when the evidence given is not enough, and make
+independent calls in parallel. The prompt omits XPOS and FEATS: pair_words gives
+every column of a pair's words, and category_links shows how words of a category
+(UPOS, XPOS, FEATS such as Case=Gen, deprel) are usually linked or left unlinked.
+Use them when the grammar decides a link (an article, a case against a
+preposition, tense and voice, a participle).
 
 Answer with ONE final result. In `links`, one line per link:
 "SENT_ID A-B S|P CONFIDENCE", e.g. "B10K1V1 3-5 S 0.95". List every link of
@@ -79,7 +84,8 @@ or preposition on the other side is right when that morpheme renders it.
 For each pair the task gives both sentences (id form lemma UPOS head deprel,
 glosses where available), all its links, and the links to score. Rate each
 link to score: how likely is it that these two words correspond in this
-sentence? 0.95 or more = clearly right; 0.8 = probably right; 0.6 = doubtful;
+sentence? (Tools: pair_words for XPOS and FEATS, category_links for how a kind of
+word is usually linked, similar_pairs, lemma_links, link_examples.) 0.95 or more = clearly right; 0.8 = probably right; 0.6 = doubtful;
 below 0.5 = probably wrong (e.g. the wrong one of two similar words, or a word
 that has a better counterpart). Links below {threshold} go back to the aligner.
 

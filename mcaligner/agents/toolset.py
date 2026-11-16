@@ -31,9 +31,11 @@ READ_TOOLS = frozenset(
         "lemma_links",
         "link_examples",
         "alignment_stats",
+        "pair_words",
+        "category_links",
     }
 )
-"""Deliberately small: the task prompt already has the pairs, their links and the main evidence; the last four are mcaligner's exploration tools."""
+"""Deliberately small: the task prompt already has the pairs, their links and the main evidence; the last six are mcaligner's exploration tools."""
 
 LIST_ARGUMENTS = ("alignments", "sources")
 """List arguments that models sometimes send as a JSON string."""
@@ -69,7 +71,36 @@ def translations(result: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
-FORMATTERS = {"get_parallel": parallel_view, "translation_candidates": translations}
+def pair_words_view(result: dict[str, Any]) -> str:
+    lines = [f"Pair {result['sent_id']} ({result['alignment']}): id form lemma UPOS XPOS FEATS head deprel -> linked ids"]
+    for side in ("a", "b"):
+        if side in result:
+            lines.append(f"{side.upper()} ({result[side]['source']}):")
+            lines += [
+                f"{w['id']} {w['form']} {w['lemma']} {w['upos']} {w['xpos']} {w['feats']} {w['head']} {w['deprel']}"
+                f" -> {','.join(w['linked']) or '-'}"
+                for w in result[side]["words"]
+            ]
+    return "\n".join(lines)
+
+
+def category_view(result: dict[str, Any]) -> str:
+    filters = " ".join(f"{k}={v}" for k, v in result["filter"].items() if v)
+    lines = [f"Words of side {result['side']} with {filters}: {result['occurrences']} occurrences, {result['unlinked']} unlinked."]
+    for key in ("upos", "xpos", "lemma"):
+        shown = ", ".join(f"{c['value']}×{c['count']}" for c in result[f"partner_{key}"]) or "nothing"
+        lines.append(f"Linked to {key}: {shown}.")
+    if result["examples"]:
+        lines.append("Examples: " + "; ".join(result["examples"]))
+    return "\n".join(lines)
+
+
+FORMATTERS = {
+    "get_parallel": parallel_view,
+    "translation_candidates": translations,
+    "pair_words": pair_words_view,
+    "category_links": category_view,
+}
 
 
 def compact(name: str, result: Any) -> Any:

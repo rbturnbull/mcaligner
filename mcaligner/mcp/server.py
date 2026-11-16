@@ -19,7 +19,9 @@ INSTRUCTIONS = """
 Alignment exploration (mcaligner): to decide how to align a pair, call
 similar_pairs for verses with many of the same lemmas and see how they were
 linked; lemma_links for every link of one lemma and its context; link_examples
-for how one lemma pair was linked (or not) where both occur; alignment_stats
+for how one lemma pair was linked (or not) where both occur; pair_words for every
+column (FEATS, XPOS, head, deprel) of a pair's words; category_links for how words of a
+category (UPOS, XPOS, FEATS, deprel) are usually linked or left unlinked; alignment_stats
 for link counts, unlinked words, crossings and confidence. Pass
 exclude_sentence with the pair you are aligning so its own links are not used
 as evidence. A lemma is the word's lemma, or its form if it has none.
@@ -84,6 +86,30 @@ def add_tools(server: MCPServer, store: CorpusStore) -> MCPServer:
     ) -> dict[str, Any]:
         """Pairs where lemma_a (source A) and lemma_b (source B) are linked, and pairs where both occur but are not."""
         return tools.link_examples(store, alignment, lemma_a, lemma_b, limit, min_confidence, exclude_sentence)
+
+    @tool
+    def pair_words(
+        alignment: Alignment,
+        sent_id: SentId,
+        side: Annotated[Literal["a", "b"] | None, Field(description="Only this source (default both).")] = None,
+    ) -> dict[str, Any]:
+        """All columns of a pair's words: lemma, UPOS, XPOS, FEATS, head, deprel, and the ids each word is linked to."""
+        return tools.pair_words(store, alignment, sent_id, side)
+
+    @tool
+    def category_links(
+        alignment: Alignment,
+        side: Annotated[Literal["a", "b"], Field(description="Which source the words belong to.")] = "a",
+        upos: Annotated[str | None, Field(description="UPOS, e.g. DET.")] = None,
+        xpos: Annotated[str | None, Field(description="XPOS, e.g. Nb.")] = None,
+        feats: Annotated[str | None, Field(description='FEATS, e.g. "Case=Gen|Number=Sing".')] = None,
+        deprel: Annotated[str | None, Field(description="Dependency relation, e.g. obl.")] = None,
+        limit: Annotated[int, Field(ge=1, le=50)] = 10,
+        min_confidence: MinConfidence = 0.0,
+        exclude_sentence: Exclude = None,
+    ) -> dict[str, Any]:
+        """How words of a category (UPOS, XPOS, FEATS, deprel) are linked: partner UPOS/XPOS/lemmas and how often unlinked."""
+        return tools.category_links(store, alignment, side, upos, xpos, feats, deprel, limit, min_confidence, exclude_sentence)
 
     @tool
     def alignment_stats(

@@ -39,7 +39,7 @@ mcaligner/
     outputs.py   # Alignment/Scores answers (lines), parsing, Applier (dry-run set_links, then apply)
     toolset.py   # ReadToolset: 5 read MCP tools, JSON-string list args repaired, compact results
     team.py      # AlignerTeam: one pydantic-ai Agent per role over MCPToolset(build_server(store)); usage/cost
-  mcp/           # tools.py (similar_pairs, lemma_links, link_examples, alignment_stats), server.py (MCParser's server + these), cli.py (mcp serve/config)
+  mcp/           # tools.py (similar_pairs, lemma_links, link_examples, pair_words, category_links, alignment_stats), server.py (MCParser's server + these), cli.py (mcp serve/config)
   pipeline.py    # rules -> align -> score -> rules rounds, batching, concurrency, RunReport
   cli.py         # typer app: evaluate, lexicon, rules, run, settings, mcp (MCParser's mcp_app)
 docs/            # Sphinx (myst-parser + furo); CLI page rendered from --help in conf.py
