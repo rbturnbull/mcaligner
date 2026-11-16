@@ -25,26 +25,18 @@ A set is given on the command line as
 sources as `[NAME=]PATH[:ro|rw]` (default `ro`). Every edit to a writable set is
 appended to `<file>.history.jsonl`.
 
-## Converting the old format
+## Exchange formats
 
-The old mcaligner kept both parses and the alignment of each verse in one
-YAML file:
+JSON Lines is the stored format. `mcparser align import` and `mcparser align
+export` convert to and from Pharaoh/Ugarit text (`0-0S 1-2P`, one line per
+pair, 0- or 1-based) and YAML (`sent_id: 1-1S 2-3P`); see MCParser's
+documentation. Gold standards that come as raw text plus links (for example
+the Greek-Latin one) need the tokens of the parsed CoNLL-U files, which can
+differ from the gold's tokens; `scripts/grc_lat_gold.py` maps one onto the
+other by character position.
 
-```yaml
-B10K1V1:
-  ArabGr1-Arabic-Ephesians-Parsed: {text: ..., verse: Ephesians 1:1, conllu: ..., id: B10K1V1}
-  ArabGr1-GreekVorlage-Ephesians-Parsed: {...}
-  alignment: 1-1S 2-2S 3-3P
-```
-
-`mcaligner convert` writes `<corpus>.conllu` for each text (`sent_id` = the
-verse id, `# text`, and the other fields as comments) and `<name>.jsonl` with
-the alignments. It pads token lines that lack trailing columns and drops links
-to words that do not exist, and reports both. On `results/ArabicAligned.yaml`
-(155 verses, 2095 links): 4 lines padded, 1 link dropped.
-
-The old alignments came from an earlier LLM run: use them as **silver**
-evidence (read-only), not as gold.
+Alignments from an earlier LLM run (for example the old Ephesians YAML) are
+**silver**: use them as read-only evidence, not as gold.
 
 ## The translation table
 

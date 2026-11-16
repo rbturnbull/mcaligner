@@ -15,7 +15,6 @@ from mcparser.mcp import AlignmentSpec, SourceSpec, load_store
 from pydantic import ValidationError
 from pydantic_ai.exceptions import UserError
 
-from .convert import convert as convert_yaml
 from .evaluate import evaluate as evaluate_links
 from .evaluate import format_report, read_links
 from .mcp.cli import mcp_app
@@ -71,30 +70,6 @@ def write_data(data: object, output: Path | None) -> None:
     else:
         output.parent.mkdir(parents=True, exist_ok=True)
         output.write_text(text, encoding="utf-8")
-
-
-@app.command()
-def convert(
-    input: Annotated[Path, typer.Argument(help="Old mcaligner YAML: {verse: {corpus_a: {...}, corpus_b: {...}, alignment}}.")],
-    output: Annotated[Path, typer.Option("--output", "-o", help="Directory for the CoNLL-U and JSONL files.")] = Path("data"),
-    name: Annotated[str | None, typer.Option(help="Alignment set name (file stem); default the input's stem.")] = None,
-) -> None:
-    """Split an old YAML file into one CoNLL-U file per corpus and a JSONL alignment set."""
-    try:
-        report = convert_yaml(input, output, name=name)
-    except (CorpusError, OSError) as error:
-        raise fail(error) from None
-    typer.echo(f"{report.corpus_a}: {report.sentences_a} sentences -> {report.conllu_a}")
-    typer.echo(f"{report.corpus_b}: {report.sentences_b} sentences -> {report.conllu_b}")
-    typer.echo(f"Alignments: {report.pairs} pairs, {report.links} links -> {report.alignment}")
-    if report.repaired_lines:
-        typer.echo(f"Padded {report.repaired_lines} token lines that had fewer than 10 columns.")
-    if report.dropped_links:
-        typer.echo(f"Dropped {len(report.dropped_links)} links to missing words: {', '.join(report.dropped_links)}")
-    typer.echo(
-        f"Use them with: -s {report.conllu_a} -s {report.conllu_b} "
-        f"-a {report.alignment.stem}={report.corpus_a},{report.corpus_b},{report.alignment}:ro"
-    )
 
 
 @app.command()

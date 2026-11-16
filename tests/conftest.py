@@ -1,36 +1,41 @@
 from __future__ import annotations
 
 import json
+import shutil
 from pathlib import Path
+from typing import NamedTuple
 
 import pytest
 from mcparser.corpus import CorpusStore
 from pydantic_ai import models
 
-from mcaligner.convert import convert
-
 models.ALLOW_MODEL_REQUESTS = False  # never call a real model from the tests
 
 DATA = Path(__file__).parent / "data"
-SAMPLE = DATA / "sample.yaml"
-ARABIC = "ArabGr1-Arabic-Ephesians-Parsed"
-GREEK = "ArabGr1-GreekVorlage-Ephesians-Parsed"
+
+
+class Files(NamedTuple):
+    conllu_a: Path
+    conllu_b: Path
+    alignment: Path
 
 
 @pytest.fixture
-def converted(tmp_path: Path):
-    """The 3-verse sample converted to CoNLL-U + JSONL in a temporary directory."""
-    return convert(SAMPLE, tmp_path / "data", name="silver")
+def files(tmp_path: Path) -> Files:
+    """Verses B10K1V1-3 of Ephesians (Arabic, Greek and the silver links) copied to a temporary directory."""
+    folder = tmp_path / "data"
+    folder.mkdir()
+    return Files(*(Path(shutil.copy(DATA / name, folder / name)) for name in ("ar.conllu", "grc.conllu", "silver.jsonl")))
 
 
 @pytest.fixture
-def store(converted) -> CorpusStore:
+def store(files) -> CorpusStore:
     """Arabic + Greek sources, the silver alignments (read-only) and an empty writable set ``pred``."""
     store = CorpusStore()
-    store.add_source("ar", converted.conllu_a)
-    store.add_source("grc", converted.conllu_b)
-    store.add_alignment("silver", "ar", "grc", converted.alignment, mode="ro")
-    store.add_alignment("pred", "ar", "grc", converted.alignment.parent / "pred.jsonl")
+    store.add_source("ar", files.conllu_a)
+    store.add_source("grc", files.conllu_b)
+    store.add_alignment("silver", "ar", "grc", files.alignment, mode="ro")
+    store.add_alignment("pred", "ar", "grc", files.alignment.parent / "pred.jsonl")
     return store
 
 

@@ -1,0 +1,63 @@
+# sent_id = B10K1V1
+# text = παυλος αποστολος ιησου χριστου δια θεληματος θεου τοις αγιοις τοις ουσιν εν εφεσω και πιστοις εν χριστω ιησου
+# verse = Ephesians 1:1
+1	παυλος	Παῦλος	PROPN	Ne	Case=Nom|Gender=Masc|Number=Sing	0	root	_	_
+2	αποστολος	ἀπόστολος	NOUN	Nb	Case=Nom|Gender=Masc|Number=Sing	1	appos	_	_
+3	ιησου	Ἰησοῦς	PROPN	Ne	Case=Gen|Gender=Masc|Number=Sing	2	nmod	_	_
+4	χριστου	Χριστός	PROPN	Ne	Case=Gen|Gender=Masc|Number=Sing	3	flat:name	_	_
+5	δια	διά	ADP	R-	_	6	case	_	_
+6	θεληματος	θέλημα	NOUN	Nb	Case=Gen|Gender=Neut|Number=Sing	2	nmod	_	_
+7	θεου	θεός	NOUN	Nb	Case=Gen|Gender=Masc|Number=Sing	6	nmod	_	_
+8	τοις	ὁ	DET	S-	Case=Dat|Definite=Def|Gender=Masc,Neut|Number=Plur|PronType=Dem	9	det	_	_
+9	αγιοις	ἅγιος	ADJ	A-	Case=Dat|Degree=Pos|Gender=Masc|Number=Plur	1	orphan	_	_
+10	τοις	ὁ	DET	S-	Case=Dat|Definite=Def|Gender=Masc,Neut|Number=Plur|PronType=Dem	11	det	_	_
+11	ουσιν	εἰμί	AUX	V-	Case=Dat|Gender=Masc,Neut|Number=Plur|Tense=Pres|VerbForm=Part|Voice=Act	9	nmod	_	_
+12	εν	ἐν	ADP	R-	_	13	case	_	_
+13	εφεσω	Ἔφεσος	PROPN	Ne	Case=Dat|Gender=Fem|Number=Sing	11	obl	_	_
+14	και	καί	CCONJ	C-	_	15	cc	_	_
+15	πιστοις	πιστός	ADJ	A-	Case=Dat|Degree=Pos|Gender=Masc|Number=Plur	9	conj	_	_
+16	εν	ἐν	ADP	R-	_	17	case	_	_
+17	χριστω	Χριστός	PROPN	Ne	Case=Dat|Gender=Masc|Number=Sing	15	obl	_	_
+18	ιησου	Ἰησοῦς	PROPN	Ne	Case=Dat|Gender=Masc|Number=Sing	17	flat:name	_	_
+
+# sent_id = B10K1V2
+# text = η χαρις υμιν απο θεου πατρος ημων και κυριου ιησου χριστου
+# verse = Ephesians 1:2
+1	η	ὁ	DET	S-	Case=Nom|Definite=Def|Gender=Fem|Number=Sing|PronType=Dem	2	det	_	_
+2	χαρις	χάρις	NOUN	Nb	Case=Nom|Gender=Fem|Number=Sing	0	root	_	_
+3	υμιν	ὑμεῖς	PRON	Pp	Case=Dat|Gender=Masc|Number=Plur|Person=2|PronType=Prs	2	orphan	_	_
+4	απο	ἀπό	ADP	R-	_	5	case	_	_
+5	θεου	θεός	NOUN	Nb	Case=Gen|Gender=Masc|Number=Sing	2	orphan	_	_
+6	πατρος	πατήρ	NOUN	Nb	Case=Gen|Gender=Masc|Number=Sing	5	appos	_	_
+7	ημων	ἡμεῖς	PRON	Pp	Case=Gen|Gender=Masc|Number=Plur|Person=1|PronType=Prs	6	det	_	_
+8	και	καί	CCONJ	C-	_	9	cc	_	_
+9	κυριου	κύριος	NOUN	Nb	Case=Gen|Gender=Masc|Number=Sing	5	conj	_	_
+10	ιησου	Ἰησοῦς	PROPN	Ne	Case=Gen|Gender=Masc|Number=Sing	9	appos	_	_
+11	χριστου	Χριστός	PROPN	Ne	Case=Gen|Gender=Masc|Number=Sing	10	flat:name	_	_
+
+# sent_id = B10K1V3
+# text = ευλογητος ο θεος και πατηρ του κυριου ημων ιησου χριστου ο ευλογησας ημας εν παση ευλογια πνευματικη εν τοις επουρανιοις εν χριστω
+# verse = Ephesians 1:3
+1	ευλογητος	εὐλογητός	ADJ	A-	Case=Nom|Degree=Pos|Gender=Masc|Number=Sing	0	root	_	_
+2	ο	ὁ	DET	S-	Case=Nom|Definite=Def|Gender=Masc|Number=Sing|PronType=Dem	3	det	_	_
+3	θεος	θεός	NOUN	Nb	Case=Nom|Gender=Masc|Number=Sing	1	nsubj	_	_
+4	και	καί	CCONJ	C-	_	5	cc	_	_
+5	πατηρ	πατήρ	NOUN	Nb	Case=Nom|Gender=Masc|Number=Sing	3	conj	_	_
+6	του	ὁ	DET	S-	Case=Gen|Definite=Def|Gender=Masc,Neut|Number=Sing|PronType=Dem	7	det	_	_
+7	κυριου	κύριος	NOUN	Nb	Case=Gen|Gender=Masc|Number=Sing	5	nmod	_	_
+8	ημων	ἡμεῖς	PRON	Pp	Case=Gen|Gender=Masc|Number=Plur|Person=1|PronType=Prs	7	det	_	_
+9	ιησου	Ἰησοῦς	PROPN	Ne	Case=Gen|Gender=Masc|Number=Sing	7	appos	_	_
+10	χριστου	Χριστός	PROPN	Ne	Case=Gen|Gender=Masc|Number=Sing	9	flat:name	_	_
+11	ο	ὁ	DET	S-	Case=Nom|Definite=Def|Gender=Masc|Number=Sing|PronType=Dem	12	det	_	_
+12	ευλογησας	εὐλογέω	VERB	V-	Aspect=Perf|Case=Nom|Gender=Masc|Number=Sing|Tense=Past|VerbForm=Part|Voice=Act	5	nmod	_	_
+13	ημας	ἡμεῖς	PRON	Pp	Case=Acc|Gender=Masc|Number=Plur|Person=1|PronType=Prs	12	obj	_	_
+14	εν	ἐν	ADP	R-	_	16	case	_	_
+15	παση	πᾶς	DET	Px	Case=Dat|Gender=Fem|Number=Sing	16	det	_	_
+16	ευλογια	εὐλογία	NOUN	Nb	Case=Dat|Gender=Fem|Number=Sing	12	obl	_	_
+17	πνευματικη	πνευματικός	ADJ	A-	Case=Dat|Degree=Pos|Gender=Fem|Number=Sing	16	amod	_	_
+18	εν	ἐν	ADP	R-	_	20	case	_	_
+19	τοις	ὁ	DET	S-	Case=Dat|Definite=Def|Gender=Masc,Neut|Number=Plur|PronType=Dem	20	det	_	_
+20	επουρανιοις	ἐπουράνιος	ADJ	A-	Case=Dat|Degree=Pos|Gender=Neut|Number=Plur	12	advmod	_	_
+21	εν	ἐν	ADP	R-	_	22	case	_	_
+22	χριστω	Χριστός	PROPN	Ne	Case=Dat|Gender=Masc|Number=Sing	12	obl	_	_
+

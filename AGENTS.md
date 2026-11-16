@@ -17,7 +17,7 @@ server. The handoff brief is `INSTRUCTIONS.md`.
 
 | Milestone | State |
 |---|---|
-| 1. Package set-up, `convert`, fixture tests | done, 100% covered |
+| 1. Package set-up, fixture tests (`convert` has since been removed) | done, 100% covered |
 | 2. `evaluate` (AER, P/R/F1) and `lexicon` | done, 100% covered |
 | 3. Rules, precision measured on the 155 verses | done, 100% covered (see Rules below) |
 | 4. Aligner agent, scorer, pipeline; small real run | done, 100% covered; 2 real 5-verse runs ($0.21, $0.18) |
@@ -30,7 +30,6 @@ not imported.
 
 ```
 mcaligner/
-  convert.py     # old YAML (both parses + alignment per verse) -> 2 CoNLL-U + JSONL alignment set
   evaluate.py    # P/R/F1 over sure and over all links, AER; per pair + micro total
   lexicon.py     # TranslationTable (lemma -> linked lemmas, one pass, leave-one-pair-out) + lexicon export
   rules.py       # code-only links: identical symbols, transliterated names, dominant lexicon match; measure()
@@ -42,9 +41,9 @@ mcaligner/
     team.py      # AlignerTeam: one pydantic-ai Agent per role over MCPToolset(build_server(store)); usage/cost
   mcp/           # tools.py (similar_pairs, lemma_links, link_examples, alignment_stats), server.py (MCParser's server + these), cli.py (mcp serve/config)
   pipeline.py    # rules -> align -> score -> rules rounds, batching, concurrency, RunReport
-  cli.py         # typer app: convert, evaluate, lexicon, rules, run, settings, mcp (MCParser's mcp_app)
+  cli.py         # typer app: evaluate, lexicon, rules, run, settings, mcp (MCParser's mcp_app)
 docs/            # Sphinx (myst-parser + furo); CLI page rendered from --help in conf.py
-tests/           # pytest; tests/data/sample.yaml = verses B10K1V1-3 of results/ArabicAligned.yaml;
+tests/           # pytest; tests/data/{ar,grc}.conllu + silver.jsonl = verses B10K1V1-3 of results/ArabicAligned.yaml;
                  # tests/scripted.py = scripted FunctionModels (align(), score()) for agent tests
 ```
 
@@ -55,13 +54,13 @@ tests/           # pytest; tests/data/sample.yaml = verses B10K1V1-3 of results/
   `Gloss=`/`Translit=`/`LTranslit=`/`Root=`) and Greek
   (`ArabGr1-GreekVorlage-Ephesians-Parsed`, PROIEL-style, unaccented forms,
   accented lemmas). `alignment` = old LLM output: **silver**, not gold.
-- `uv run mcaligner convert results/ArabicAligned.yaml -o data/` writes
-  `data/<corpus>.conllu` ×2 and `data/ArabicAligned.jsonl` (`/data/` is ignored).
-  Silver totals: 2095 links (1967 S, 128 P); after conversion 2094 links in 155 pairs.
-- Data quirks found by `convert`: 4 Arabic multiword lines have 9 columns
-  (padded with `_`, reported); one silver link points to a missing word
-  (`B10K2V16 16-16P`, dropped and reported); duplicate links are merged
-  (first kept).
+- It was split once (by a `convert` command that has been removed, along with
+  its code) into `data/<corpus>.conllu` ×2 and `data/ArabicAligned.jsonl`
+  (`/data/` is ignored; keep them, they cannot be regenerated from the repo).
+  Silver totals: 2095 links (1967 S, 128 P); in the split 2094 links in 155 pairs.
+- Data quirks found then: 4 Arabic multiword lines had 9 columns (padded with
+  `_`); one silver link pointed to a missing word (`B10K2V16 16-16P`, dropped);
+  duplicate links were merged (first kept).
 - The Greek side has **no punctuation tokens** (Arabic has 116 PUNCT), so a
   punctuation rule cannot fire on this text.
 
@@ -75,12 +74,10 @@ tests/           # pytest; tests/data/sample.yaml = verses B10K1V1-3 of results/
   (reusing its typer option types) over `mcaligner.mcp.build_server`, which
   is MCParser's server plus the exploration tools; the Claude Desktop config
   runs `python -m mcaligner mcp serve`.
-- **`convert`** writes JSONL directly (no store, no history sidecar): it is an
-  import, not an edit. Links carry no confidence, so a read-only set gives them
-  its default (1.0, or e.g. `:ro:0.8` in the alignment spec).
-  Comments: `sent_id` = verse id, `text` (whitespace normalised), then the other
-  fields (`verse = Ephesians 1:1`). Corpus A/B = the first two corpus keys of the
-  first verse that has two.
+- **Alignment files** are MCParser's JSON Lines sets. Imported links carry no
+  confidence, so a read-only set gives them its default (1.0, or e.g. `:ro:0.8`
+  in the alignment spec). `mcparser align import/export` (MCParser, after 0.2.0a1)
+  converts to and from Pharaoh/Ugarit text and YAML.
 
 - **Evaluation** (`evaluate.py`): A = predicted, S = gold sure, P = gold all.
   "sure" P/R/F1 compares predicted *sure* links with S; "all" compares A with P
@@ -103,6 +100,18 @@ tests/           # pytest; tests/data/sample.yaml = verses B10K1V1-3 of results/
   silver set it reproduces the old `results/ArabicLexicon.yaml` exactly (1138
   lemmas) except for the dropped `B10K2V16 16-16P` link (old code counted a link
   to a missing word as "aligned").
+
+## Greek-Latin gold standard
+
+`/Users/rturnbull/MDAP/BICROSS/Alignment/Alignment-Gold-Standards/grc-lat`: 100 DFHG
+fragments (raw text only, 1983 grc / 1860 lat tokens, 1593 links, 0-based Ugarit).
+Workflow: `mcparser init grc.txt -o grc.conllu` (and lat), parse with the PROIEL
+treebanks (`UD/UD_Ancient_Greek-PROIEL`, `UD/UD_Latin-PROIEL`), then
+`uv run python scripts/grc_lat_gold.py GOLD.json grc.conllu lat.conllu -o gold.jsonl` (a disposable script, not part of the package) maps each
+gold token to the parsed words covering the same characters (a link goes to every
+overlapping word), so it survives tokenisation differences. `init` only detaches `«` and the
+full stop of `rep.` (3 fragments: grc 64, lat 26, lat 64; 1593 -> 1597 links). Work files are in `data/grc-lat/`.
+Do not let a parser change the segmentation after the gold is mapped.
 
 ## Rules (no model)
 

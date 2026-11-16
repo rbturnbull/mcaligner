@@ -15,7 +15,7 @@ text A to a word of text B, written Ugarit style: `3-5S` (sure) or `12-18P`
 (probable). The links feed a bilingual lexicon: which lemmas translate which.
 
 ```text
-old YAML ──convert──▶ A.conllu + B.conllu (+ silver.jsonl)
+A.conllu + B.conllu (+ silver.jsonl)
                          │
                          ▼
               rules ──▶ aligner ──▶ scorer ──▶ rules ...   (run)

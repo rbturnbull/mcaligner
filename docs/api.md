@@ -1,7 +1,6 @@
 # API reference
 
 ```{eval-rst}
-.. automodule:: mcaligner.convert
 .. automodule:: mcaligner.lexicon
 .. automodule:: mcaligner.rules
 .. automodule:: mcaligner.evaluate

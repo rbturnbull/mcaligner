@@ -38,9 +38,6 @@ Usage
 
 .. code-block:: bash
 
-   # old YAML (both parses + alignment per verse) -> CoNLL-U files + JSONL alignment set
-   uv run mcaligner convert results/ArabicAligned.yaml -o data/
-
    SRC="-s ar=data/ArabGr1-Arabic-Ephesians-Parsed.conllu -s grc=data/ArabGr1-GreekVorlage-Ephesians-Parsed.conllu"
 
    # rules + aligner/scorer agents; prints tokens and estimated cost

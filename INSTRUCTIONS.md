@@ -1,5 +1,7 @@
 # Instructions: rebuild mcaligner on top of MCParser
 
+> Historical handoff brief. The `convert` command it describes has since been removed (see AGENTS.md).
+
 You are working in the `mcaligner` repository. Rebuild it as a new package that
 uses **MCParser** (the sibling repository `../llmparser`) as a dependency, and
 reaches its data through MCParser's corpus store and MCP server.

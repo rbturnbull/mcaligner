@@ -35,7 +35,7 @@ autodoc_default_options = {"members": True, "show-inheritance": True}
 suppress_warnings = ["myst.xref_missing"]
 
 CLI_COMMANDS = [
-    [], ["convert"], ["rules"], ["run"], ["evaluate"], ["lexicon"], ["settings"], ["mcp", "serve"], ["mcp", "config"],
+    [], ["rules"], ["run"], ["evaluate"], ["lexicon"], ["settings"], ["mcp", "serve"], ["mcp", "config"],
 ]  # fmt: skip
 
 

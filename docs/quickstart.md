@@ -9,14 +9,10 @@ uv sync --python /opt/homebrew/opt/python@3.13/bin/python3.13
 export ANTHROPIC_API_KEY=...
 ```
 
-## From the old YAML format
+## Data
 
-```bash
-uv run mcaligner convert results/ArabicAligned.yaml -o data/
-```
-
-This writes one CoNLL-U file per text and the old alignments as a JSON Lines
-alignment set, and prints the `--source`/`--alignment` options to use them.
+You need two parsed CoNLL-U files (the same `sent_id` on both sides) and, for evaluation or
+evidence, an alignment set in JSON Lines (see [Data](data.md)).
 Below, `A` and `B` stand for the two CoNLL-U files:
 
 ```bash
