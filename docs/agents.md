@@ -65,7 +65,8 @@ the same code runs ablations such as "no parse" or "with FEATS".
 The aligner's and scorer's instructions include annotation guidelines, so they follow the rules the human
 annotators followed. The default is the bundled `grc-lat` (`mcaligner/guidelines/grc-lat.md`, a condensed version of
 the Ugarit guidelines for Greek-Latin fragments; articles are not aligned). `bicross` is the BICROSS guidelines of 13 August 2024
-for the New Testament manuscripts (articles are aligned with their noun's translation), which the BICROSS annotators followed. Use `--guidelines PATH` (or `guidelines:` in the settings) for your
+for the New Testament manuscripts (articles are aligned with their noun's translation), which the BICROSS annotators followed. `grc-ar` is a draft for Greek-Arabic (an Arabic translation of a Greek Vorlage,
+with the Arabic split into syntactic words); it has not been checked against a human alignment. Use `--guidelines PATH` (or `guidelines:` in the settings) for your
 own text, or `--guidelines none` for other language pairs such as Arabic-Greek.
 
 Punctuation is never aligned under these guidelines, so links to punctuation are dropped in code from the aligner's

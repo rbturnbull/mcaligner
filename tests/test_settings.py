@@ -70,3 +70,13 @@ def test_columns_and_tools_settings():
     with pytest.raises(ValidationError, match="Unknown tools"):
         Settings(tools=["set_links"])
     assert default.with_overrides(columns=[], tools=[]).columns == []
+
+
+def test_every_bundled_guideline_loads():
+    from mcaligner.settings import GUIDELINES
+
+    names = sorted(path.stem for path in GUIDELINES.glob("*.md"))
+    assert {"grc-lat", "bicross", "grc-ar"} <= set(names)
+    for name in names:
+        text = Settings(guidelines=name).guidelines_text
+        assert text and text.startswith("# ")

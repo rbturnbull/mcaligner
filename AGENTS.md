@@ -32,7 +32,7 @@ not imported.
 mcaligner/
   evaluate.py    # P/R/F1 over sure and over all links, AER; per pair + micro total
   lexicon.py     # TranslationTable (lemma -> linked lemmas, one pass, leave-one-pair-out) + lexicon export
-  guidelines/    # bundled annotation guidelines (grc-lat.md, bicross.md), added to the agents' instructions (setting `guidelines`, default grc-lat)
+  guidelines/    # bundled annotation guidelines (grc-lat.md, bicross.md, grc-ar.md: a draft for Greek-Arabic, unvalidated), added to the agents' instructions (setting `guidelines`, default grc-lat)
   rules.py       # code-only links: identical symbols, transliterated names, dominant lexicon match; measure()
   settings.py    # Settings (YAML): tiers, per-role model/thinking/instructions/enabled, batching, rules
   agents/
@@ -189,6 +189,34 @@ own article rule (to be tested; the dev set was used to find this).
 The annotators agree with each other at F1 0.955 on these verses, so the aligner is at the level of the human agreement
 (against each annotator separately). The consensus (links of either annotator) is a lenient reference; compare with the
 per-annotator figures. The guidelines were chosen after seeing the article gap on this dev set: confirm on the 79 test verses.
+
+**BICROSS held-out test** (79 verses never used for tuning; `data/bicross/align-test.sh`; defaults except `--guidelines bicross`:
+columns lemma upos head deprel, all tools allowed, rules on, 2 rounds, Opus aligner + Sonnet scorer, cold start). Cost $2.64
+(Opus $1.84, Sonnet $0.80), 86 tasks / 86 requests, 0 retries, 0 tool calls, 0 failed, 0 punctuation links dropped. 1412 links.
+F1 over all links (AER): vs Kreinecker 0.947 (0.053), vs Tilke 0.975 (0.025), vs consensus 0.969 (0.013). The two annotators
+agree with each other at F1 0.946 (AER 0.054) on the same 79 verses, so the pipeline is at the level of human agreement. It
+agrees more with Tilke (who links more, 1404 vs 1371 links) than with Kreinecker. Dev (tuned) was 0.957 / 0.967 / 0.978.
+
+**DFHG held-out test** (80 fragments never used for tuning; `data/grc-lat/align-test.sh`; defaults, `grc-lat` guidelines, cold start,
+2 rounds): $2.34 (Opus $1.69, Sonnet $0.66), 88 tasks / 88 requests, 0 retries, 0 tool calls, 0 failed, 2 punctuation links
+dropped. 1215 links vs 1284 gold: sure P/R/F1 0.967/0.877/0.920; all links 0.948/0.897/0.922, AER 0.042 (dev: 0.919, 0.044). The
+DFHG annotators agree at Dice about 0.927 (README counts, all 100 fragments), so the pipeline is at that level.
+Remaining errors (132 missed, 63 extra): missed = verbs and participles linked to relatives or subordinators (`παροικοῦντες~qui`,
+`ἠνάγκαζε~ut`), prepositions the Latin renders by case (`ἐν~Babyloniae`), adverbs; extra = `ἐν~libro` (the v2 guideline's "libro"
+exception and the `μέν`/`δέ` rule are not in the short `grc-lat.md`). The test errors have now been seen: tune guidelines on dev only.
+
+**Column ablation on the held-out test sets** (`scripts/ablation_test.sh`; corpus guidelines, `--tools none`, defaults otherwise; one run each;
+F1 over all links with 95% bootstrap over the test pairs):
+
+| Test set | words only | + lemma, UPOS | default columns + all tools (earlier run) | lemma-upos minus words only |
+|---|---|---|---|---|
+| DFHG (80) vs gold | 0.927 [0.911, 0.941], $1.55 | 0.922, $1.88 | 0.922, $2.34 | -0.005 [-0.011, +0.002] |
+| BICROSS (79) vs Kreinecker | 0.948, $1.76 | 0.946, $1.95 | 0.946, $2.64 | -0.002 [-0.006, +0.003] |
+| BICROSS vs Tilke | 0.974 | 0.973 | 0.975 | -0.002 [-0.005, +0.002] |
+
+Words only is as good as with the parse in all four comparisons (never worse than -0.005) and 10-17% cheaper than lemma+UPOS,
+about 35% cheaper than the default configuration. The parse in the prompt does not help alignment on these two corpora (cold start,
+rules unchanged). Not tested: the evidence path (lemma-based hints with accumulated links) and lower-resource languages.
 - Rules on the dev set: names 43 links (41 in gold); `identical` linked punctuation only (0 right): now off
   (`link_punctuation`); lexicon with the full gold as leave-one-out evidence adds 3 (all right).
 - BICROSS (`data/bicross/`): Greek and Latin manuscript text parsed the same way (resumable `parse-*.sh`); two
