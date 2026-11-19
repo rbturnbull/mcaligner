@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+message: "If you use MCAligner, please cite it as below."
+title: "MCAligner: word alignment of parallel texts with LLM agents"
+type: software
+authors:
+  - family-names: Turnbull
+    given-names: Robert
+    affiliation: "Melbourne Data Analytics Platform, University of Melbourne"
+    website: "https://robturnbull.com"
+version: 0.2.0a1
+license: Apache-2.0
+repository-code: "https://github.com/rbturnbull/mcaligner"
+url: "https://rbturnbull.github.io/mcaligner/"
+keywords:
+  - digital humanities
+  - word alignment
+  - parallel texts
+  - LLM agents
+  - MCP

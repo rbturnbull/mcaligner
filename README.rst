@@ -150,3 +150,23 @@ Development
 
    uv sync --all-groups
    uv run pytest      # no network; aim for 100% line and branch coverage
+
+Acknowledgements
+================
+
+.. image:: https://raw.githubusercontent.com/rbturnbull/hexapla/main/docs/_static/erc-logo.jpg
+   :alt: European Research Council
+   :width: 160px
+   :align: right
+
+The research leading to this software was conducted as part of the BICROSS project (‘The Significance of Bilingual Manuscripts for Detecting
+Cross-Language Interaction in the New Testament Tradition’), which has received funding from the European Research
+Council (ERC) under the European Union’s Horizon Europe Research and Innovation Programme (Grant Agreement
+No. 101043730 – BICROSS – ERC-2021-COG). Funded by the European Union. Views and opinions expressed are however those
+of the author only and do not necessarily reflect those of the European Union or the European Education and Culture
+Executive Agency (EACEA). Neither the European Union nor EACEA can be held responsible for them.
+
+Author
+======
+
+`Robert Turnbull <https://robturnbull.com>`_ (Melbourne Data Analytics Platform, University of Melbourne)
