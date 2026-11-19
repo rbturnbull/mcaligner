@@ -32,7 +32,7 @@ not imported.
 mcaligner/
   evaluate.py    # P/R/F1 over sure and over all links, AER; per pair + micro total
   lexicon.py     # TranslationTable (lemma -> linked lemmas, one pass, leave-one-pair-out) + lexicon export
-  guidelines/    # bundled annotation guidelines (grc-lat.md, bicross.md, grc-ar.md: a draft for Greek-Arabic, unvalidated), added to the agents' instructions (setting `guidelines`, default grc-lat)
+  guidelines/    # bundled annotation guidelines (grc-lat.md, bicross.md, grc-ar.md: a draft for Greek-Arabic, unvalidated; grc-cop.md: a draft for Greek-Coptic, unvalidated), added to the agents' instructions (setting `guidelines`, default grc-lat)
   rules.py       # code-only links: identical symbols, transliterated names, dominant lexicon match; measure()
   settings.py    # Settings (YAML): tiers, per-role model/thinking/instructions/enabled, batching, rules
   agents/
