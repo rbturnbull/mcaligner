@@ -14,7 +14,7 @@ Python 3.11 to 3.14 are supported. The repository pins 3.13 for development (`.p
 
 ## Before opening a pull request
 
-- `uv run pytest` must pass with **100% line and branch coverage**. The tests never call a real model or
+- `uv run pytest` must pass. Aim for **100% line and branch coverage** (it is reported, but a shortfall does not fail CI). The tests never call a real model or
   the network; agents are tested with the scripted models in `tests/scripted.py`.
 - `./mkdocs.sh` (Sphinx with warnings as errors) must build the documentation. Update the docs and
   `CHANGELOG.md` for user-visible changes.

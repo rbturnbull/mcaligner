@@ -1,11 +1,11 @@
 |logo| |text|
 
-.. |logo| image:: https://raw.githubusercontent.com/rbturnbull/mcaligner/main/docs/_static/mc.svg
+.. |logo| image:: https://raw.githubusercontent.com/rbturnbull/mcaligner/main/docs/_static/mc.svg?v=2
    :alt: MCAligner logo
    :height: 220px
    :align: middle
 
-.. |text| image:: https://raw.githubusercontent.com/rbturnbull/mcaligner/main/docs/_static/mcaligner-text.svg
+.. |text| image:: https://raw.githubusercontent.com/rbturnbull/mcaligner/main/docs/_static/mcaligner-text.svg?v=2
    :alt: MCAligner
    :height: 220px
    :align: middle
@@ -13,6 +13,10 @@
 =========================
 MCAligner
 =========================
+
+.. image:: https://img.shields.io/pypi/v/mcaligner?include_prereleases&color=blue&label=PyPI
+   :target: https://pypi.org/project/mcaligner/
+   :alt: PyPI version
 
 .. image:: https://github.com/rbturnbull/mcaligner/actions/workflows/testing.yml/badge.svg
    :target: https://github.com/rbturnbull/mcaligner/actions/workflows/testing.yml
@@ -41,15 +45,27 @@ work from Claude Desktop.
 Installation
 ============
 
-Python 3.11 or later.
+MCAligner needs Python 3.11 or later. Install it from `PyPI <https://pypi.org/project/mcaligner/>`_ (the
+``--pre`` flag is needed while it is an alpha release; it also installs MCParser):
 
 .. code-block:: bash
 
-   pip install --pre mcaligner       # installs MCParser too
+   pip install --pre mcaligner
    export ANTHROPIC_API_KEY=...      # the key for the models you use
    mcaligner --version
 
-To work from a clone: ``uv sync`` and prefix the commands with ``uv run``.
+or with `uv <https://docs.astral.sh/uv/>`_, as a command-line tool:
+
+.. code-block:: bash
+
+   uv tool install --prerelease allow mcaligner
+
+To work from a clone instead:
+
+.. code-block:: bash
+
+   git clone https://github.com/rbturnbull/mcaligner && cd mcaligner
+   uv sync          # then prefix the commands below with `uv run`
 
 Quick start
 ===========
@@ -113,6 +129,14 @@ The two BICROSS annotators agree with each other at F1 0.946 (AER 0.054), and th
 so the pipeline is at the level of human agreement on both. Details, caveats and ablations (the parse columns do
 not help; the guidelines do) are in `docs/results.md <docs/results.md>`_.
 
+Sister projects
+===============
+
+- `MCParser <https://github.com/rbturnbull/mcparser/>`_: dependency parsing with a team of LLM agents. It prepares
+  the CoNLL-U files that MCAligner aligns.
+- `Hexapla <https://github.com/rbturnbull/hexapla/>`_: builds static websites for reading and exploring word-aligned
+  manuscript texts from TEI transcriptions, CoNLL-U parses and alignment links such as MCAligner's.
+
 Documentation
 =============
 
@@ -125,4 +149,4 @@ Development
 .. code-block:: bash
 
    uv sync --all-groups
-   uv run pytest      # 100% line and branch coverage required, no network
+   uv run pytest      # no network; aim for 100% line and branch coverage

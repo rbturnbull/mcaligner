@@ -24,7 +24,7 @@ jobs:
       - name: Install dependencies
         run: uv sync --locked --group dev
 
-      # pyproject.toml makes pytest fail below 100% line and branch coverage.
+      # Coverage is reported but does not fail the job; only failing tests do.
       # The tests never call a real model, so no API key is needed.
       - name: Run tests
         run: uv run --locked pytest

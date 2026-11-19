@@ -362,8 +362,8 @@ tools can see the answer. 2 rounds, batch 5. Evaluated against silver
   CLI page is generated from `--help` (typer vendors click, so no sphinx-click);
   add new commands to `CLI_COMMANDS` in `docs/conf.py`.
 
-- `uv run pytest` must stay at **100% line+branch coverage**
-  (`--cov-fail-under=100`) and fast. No network: `conftest.py` sets
+- `uv run pytest` should stay at **100% line+branch coverage** (reported, not enforced: CI
+  only fails when a test fails) and fast. No network: `conftest.py` sets
   `pydantic_ai.models.ALLOW_MODEL_REQUESTS = False`.
 - Generic store/MCP functionality goes into MCParser (tested at 100%); alignment
   exploration tools specific to this project live in `mcaligner/mcp/`.

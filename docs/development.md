@@ -2,7 +2,7 @@
 
 ```bash
 uv sync --all-groups --python /opt/homebrew/opt/python@3.13/bin/python3.13
-uv run pytest        # 100% line and branch coverage required
+uv run pytest        # aim for 100% line and branch coverage (reported, not enforced)
 ./mkdocs.sh          # these docs (sphinx-build -W)
 ```
 

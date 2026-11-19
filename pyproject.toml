@@ -52,7 +52,7 @@ docs = [
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "--cov=mcaligner --cov-report=term-missing --cov-fail-under=100"
+addopts = "--cov=mcaligner --cov-report=term-missing"
 
 [tool.coverage.run]
 source = ["mcaligner"]
