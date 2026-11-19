@@ -32,8 +32,8 @@ export` convert to and from Pharaoh/Ugarit text (`0-0S 1-2P`, one line per
 pair, 0- or 1-based) and YAML (`sent_id: 1-1S 2-3P`); see MCParser's
 documentation. Gold standards that come as raw text plus links (for example
 the Greek-Latin one) need the tokens of the parsed CoNLL-U files, which can
-differ from the gold's tokens; `scripts/grc_lat_gold.py` maps one onto the
-other by character position.
+differ from the gold's tokens. Map the gold's tokens onto the parsed words by character
+position (a link goes to every parsed word that overlaps the gold token) and keep the segmentation fixed afterwards.
 
 Alignments from an earlier LLM run (for example the old Ephesians YAML) are
 **silver**: use them as read-only evidence, not as gold.

@@ -14,6 +14,12 @@ from mcaligner.cli import app
 runner = CliRunner()
 
 
+def test_version():
+    result = runner.invoke(app, ["--version"])
+    assert result.exit_code == 0
+    assert result.output.startswith("mcaligner 0.")
+
+
 def test_mcp_config(files):
     result = runner.invoke(
         app,

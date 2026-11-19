@@ -5,9 +5,9 @@ server with alignment exploration tools added. The same server can be run for
 Claude Desktop or other MCP clients:
 
 ```bash
-uv run mcaligner mcp config -s ar=data/A.conllu -s grc=data/B.conllu \
+mcaligner mcp config -s ar=data/A.conllu -s grc=data/B.conllu \
     -a pred=ar,grc,out/pred.jsonl -a silver=ar,grc,data/silver.jsonl:ro
-uv run mcaligner mcp serve ...    # stdio, or --transport streamable-http
+mcaligner mcp serve ...    # stdio, or --transport streamable-http
 ```
 
 `mcp config` prints the `mcpServers` entry for `claude_desktop_config.json`.

@@ -16,8 +16,8 @@ write, so rules never feed themselves; links that agents give high confidence
 do count, so the rule grows during a run.
 
 ```bash
-uv run mcaligner rules $SRC -a pred=... --target pred              # add links
-uv run mcaligner rules $SRC -a silver=...:ro --measure silver --show-errors
+mcaligner rules $SRC -a pred=... --target pred              # add links
+mcaligner rules $SRC -a silver=...:ro --measure silver --show-errors
 ```
 
 `--measure` proposes links for every pair of a reference set, starting from no

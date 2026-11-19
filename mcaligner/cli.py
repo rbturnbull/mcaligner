@@ -15,6 +15,7 @@ from mcparser.mcp import AlignmentSpec, SourceSpec, load_store
 from pydantic import ValidationError
 from pydantic_ai.exceptions import UserError
 
+from . import __version__
 from .evaluate import evaluate as evaluate_links
 from .evaluate import format_report, read_links
 from .mcp.cli import mcp_app
@@ -28,6 +29,21 @@ os.environ.setdefault("PYDANTIC_AI_NO_BANNER", "1")
 
 app = typer.Typer(help="LLM agents for word alignment of parallel texts.", no_args_is_help=True)
 app.add_typer(mcp_app, name="mcp", help="MCP server over the corpora and alignment sets, with alignment exploration tools.")
+
+
+def show_version(value: bool) -> None:
+    if value:
+        typer.echo(f"mcaligner {__version__}")
+        raise typer.Exit()
+
+
+@app.callback()
+def main(
+    version: Annotated[
+        bool, typer.Option("--version", callback=show_version, is_eager=True, help="Show the version and exit.")
+    ] = False,
+) -> None:
+    """LLM agents for word alignment of parallel texts."""
 
 
 SourceOption = Annotated[

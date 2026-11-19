@@ -49,10 +49,12 @@ Main features:
 :caption: Guide
 
 quickstart
+preparing
 data
 rules
 agents
 evaluation
+results
 mcp
 ```
 
